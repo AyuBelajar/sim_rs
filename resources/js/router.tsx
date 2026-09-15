@@ -19,6 +19,10 @@ import {
     AppLayout,
 } from './layouts/AppLayout';
 
+import {
+    PatientsPage,
+} from './features/patients/PatientsPage';
+
 function ComingSoon({
     title,
 }: {
@@ -78,9 +82,7 @@ const router =
                 {
                     path: 'patients',
                     element: (
-                        <ComingSoon
-                            title="Data Pasien"
-                        />
+                        <PatientsPage />
                     ),
                 },
 
