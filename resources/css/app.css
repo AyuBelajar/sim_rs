@@ -1,9 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', system-ui, sans-serif;
+
+    --color-cyan-50: #edfdf9;
+    --color-cyan-100: #c4faf0;
+    --color-cyan-200: #8af5e2;
+    --color-cyan-300: #5DF8D8;
+    --color-cyan-400: #5DF8D8;
+    --color-cyan-500: #5DF8D8;
+
+    --color-cyan-600: #093C5D;
+    --color-cyan-700: #072f49;
+    --color-cyan-800: #051f30;
+    --color-cyan-900: #031218;
+
+    --color-teal-500: #5DF8D8;
+    --color-teal-600: #3B7597;
+    --color-teal-700: #2d5b76;
+
+    --color-bg: #f1f5f9;
+    --color-surface: #ffffff;
+    --color-border: #e2e8f0;
+    --color-muted: #94a3b8;
+    --color-text: #0f172a;
+    --color-text-secondary: #475569;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
 }
