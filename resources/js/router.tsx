@@ -23,6 +23,14 @@ import {
     PatientsPage,
 } from './features/patients/PatientsPage';
 
+import {
+    RoleRoute,
+} from './features/auth/RoleRoute';
+
+import {
+    ForbiddenPage,
+} from './features/auth/ForbiddenPage';
+
 function ComingSoon({
     title,
 }: {
@@ -82,7 +90,11 @@ const router =
                 {
                     path: 'patients',
                     element: (
-                        <PatientsPage />
+                        <RoleRoute
+                            roles={['FRONT_OFFICE']}
+                        >
+                            <PatientsPage />
+                        </RoleRoute>
                     ),
                 },
 
@@ -132,6 +144,13 @@ const router =
                         />
                     ),
                 },
+                
+                {
+                    path: 'forbidden',
+                    element: (
+                        <ForbiddenPage />
+                    ),
+                }
             ],
         },
     ]);
