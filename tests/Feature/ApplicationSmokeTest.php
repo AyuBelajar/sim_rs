@@ -18,7 +18,7 @@ class ApplicationSmokeTest extends TestCase
             ->assertOk();
     }
 
-    public function test_login_endpoint_accepts_valid_user(): void
+    public function test_valid_user_can_login(): void
     {
         $user = User::factory()->create([
             'email' => 'qa-admin@test.local',
@@ -27,15 +27,10 @@ class ApplicationSmokeTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->postJson(
-            '/api/auth/login',
-            [
-                'email' => $user->email,
-                'password' => 'password123',
-            ]
-        );
-
-        $response
+        $this->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => 'password123',
+        ])
             ->assertOk()
             ->assertJsonStructure([
                 'data' => [
@@ -82,16 +77,14 @@ class ApplicationSmokeTest extends TestCase
             'is_active' => false,
         ]);
 
-        $this->postJson(
-            '/api/auth/login',
-            [
-                'email' => $user->email,
-                'password' => 'password123',
-            ]
-        )->assertUnprocessable();
+        $this->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => 'password123',
+        ])
+            ->assertUnprocessable();
     }
 
-    public function test_front_office_can_access_patient_module(): void
+    public function test_front_office_can_access_patients(): void
     {
         $user = User::factory()->create([
             'role' => 'FRONT_OFFICE',
@@ -117,7 +110,7 @@ class ApplicationSmokeTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_admin_override_can_access_patient_module(): void
+    public function test_admin_override_can_access_patients(): void
     {
         $user = User::factory()->create([
             'role' => 'ADMIN',
