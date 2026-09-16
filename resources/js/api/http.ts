@@ -1,3 +1,6 @@
+export type ValidationErrors =
+    Record<string, string[]>;
+
 export class ApiError extends Error {
     constructor(
         message: string,
@@ -5,14 +8,20 @@ export class ApiError extends Error {
         public payload?: unknown,
     ) {
         super(message);
+
+        this.name = 'ApiError';
     }
 }
 
 export function getToken(): string | null {
-    return sessionStorage.getItem('simrs_token');
+    return sessionStorage.getItem(
+        'simrs_token',
+    );
 }
 
-export function setToken(token: string): void {
+export function setToken(
+    token: string,
+): void {
     sessionStorage.setItem(
         'simrs_token',
         token,
@@ -25,44 +34,130 @@ export function clearToken(): void {
     );
 }
 
+function isObject(
+    value: unknown,
+): value is Record<string, unknown> {
+    return (
+        typeof value === 'object' &&
+        value !== null
+    );
+}
+
+function getErrorMessage(
+    payload: unknown,
+): string | null {
+    if (
+        isObject(payload) &&
+        typeof payload.message === 'string'
+    ) {
+        return payload.message;
+    }
+
+    return null;
+}
+
+export function getValidationErrors(
+    error: unknown,
+): ValidationErrors {
+    if (
+        !(error instanceof ApiError) ||
+        error.status !== 422 ||
+        !isObject(error.payload)
+    ) {
+        return {};
+    }
+
+    const errors = error.payload.errors;
+
+    if (!isObject(errors)) {
+        return {};
+    }
+
+    const result: ValidationErrors = {};
+
+    Object.entries(errors).forEach(
+        ([field, messages]) => {
+            if (
+                Array.isArray(messages) &&
+                messages.every(
+                    (message) =>
+                        typeof message === 'string',
+                )
+            ) {
+                result[field] =
+                    messages as string[];
+            }
+        },
+    );
+
+    return result;
+}
+
 export async function api<T>(
     url: string,
     init: RequestInit = {},
 ): Promise<T> {
     const token = getToken();
 
-    const response = await fetch(url, {
-        ...init,
+    let response: Response;
 
-        headers: {
-            Accept: 'application/json',
+    try {
+        response = await fetch(url, {
+            ...init,
 
-            ...(init.body
-                ? {
-                    'Content-Type':
-                        'application/json',
-                }
-                : {}),
+            headers: {
+                Accept:
+                    'application/json',
 
-            ...(token
-                ? {
-                    Authorization:
-                        `Bearer ${token}`,
-                }
-                : {}),
+                ...(init.body
+                    ? {
+                        'Content-Type':
+                            'application/json',
+                    }
+                    : {}),
 
-            ...(init.headers ?? {}),
-        },
-    });
+                ...(token
+                    ? {
+                        Authorization:
+                            `Bearer ${token}`,
+                    }
+                    : {}),
 
-    const payload =
-        response.status === 204
-            ? null
-            : await response.json();
+                ...(init.headers ?? {}),
+            },
+        });
+    } catch (error) {
+        throw new ApiError(
+            'Tidak dapat terhubung ke server.',
+            0,
+            error,
+        );
+    }
+
+    let payload: unknown = null;
+
+    if (response.status !== 204) {
+        const contentType =
+            response.headers.get(
+                'content-type',
+            ) ?? '';
+
+        if (
+            contentType.includes(
+                'application/json',
+            )
+        ) {
+            payload =
+                await response.json();
+        } else {
+            payload =
+                await response.text();
+        }
+    }
 
     if (!response.ok) {
         throw new ApiError(
-            (payload as any)?.message ??
+            getErrorMessage(payload) ??
                 'Terjadi kesalahan pada server.',
             response.status,
             payload,
