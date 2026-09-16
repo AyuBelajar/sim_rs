@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class PatientService
 {
+    public function __construct(
+        private readonly AuditService $auditService
+    ) {
+    }
+
     public function paginate(array $filters): LengthAwarePaginator
     {
         $perPage = (int) ($filters['per_page'] ?? 15);
@@ -84,7 +89,24 @@ class PatientService
                 $data['created_by'] = auth()->id();
             }
 
-            return Patient::create($data);
+            $patient = Patient::create($data);
+
+            $this->auditService->log(
+                action: 'PATIENT_CREATE',
+                model: $patient,
+                new: [
+                    'medical_record_no' =>
+                        $patient->medical_record_no,
+
+                    'full_name' =>
+                        $patient->full_name,
+
+                    'gender' =>
+                        $patient->gender,
+                ],
+            );
+
+            return $patient;
         });
     }
 
@@ -92,13 +114,62 @@ class PatientService
         Patient $patient,
         array $data
     ): Patient {
-        $patient->update($data);
+        return DB::transaction(
+            function () use ($patient, $data) {
 
-        return $patient->refresh();
+                $oldValues = $patient->only(
+                    array_keys($data)
+                );
+
+                $patient->update($data);
+
+                $oldChanged = [];
+                $newChanged = [];
+
+                foreach ($data as $key => $value) {
+
+                    if (!$patient->wasChanged($key)) {
+                        continue;
+                    }
+
+                    $oldChanged[$key] =
+                        $oldValues[$key] ?? null;
+
+                    $newChanged[$key] =
+                        $patient->getAttribute($key);
+                }
+
+                if ($newChanged !== []) {
+                    $this->auditService->log(
+                        action: 'PATIENT_UPDATE',
+                        model: $patient,
+                        old: $oldChanged,
+                        new: $newChanged,
+                    );
+                }
+
+                return $patient->refresh();
+            }
+        );
     }
 
     public function delete(Patient $patient): void
     {
-        $patient->delete();
+        DB::transaction(function () use ($patient) {
+
+            $this->auditService->log(
+                action: 'PATIENT_DELETE',
+                model: $patient,
+                old: [
+                    'medical_record_no' =>
+                        $patient->medical_record_no,
+
+                    'full_name' =>
+                        $patient->full_name,
+                ],
+            );
+
+            $patient->delete();
+        });
     }
 }
