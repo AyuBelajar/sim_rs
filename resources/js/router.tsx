@@ -12,18 +12,6 @@ import {
 } from './features/auth/ProtectedRoute';
 
 import {
-    DashboardPage,
-} from './features/dashboard/DashboardPage';
-
-import {
-    AppLayout,
-} from './layouts/AppLayout';
-
-import {
-    PatientsPage,
-} from './features/patients/PatientsPage';
-
-import {
     RoleRoute,
 } from './features/auth/RoleRoute';
 
@@ -31,38 +19,21 @@ import {
     ForbiddenPage,
 } from './features/auth/ForbiddenPage';
 
-function ComingSoon({
-    title,
-}: {
-    title: string;
-}) {
-    return (
-        <div className="
-            bg-white
-            border
-            border-slate-200
-            rounded-xl
-            p-8
-        ">
-            <h1 className="
-                text-xl
-                font-bold
-                text-slate-900
-            ">
-                {title}
-            </h1>
+import {
+    DashboardPage,
+} from './features/dashboard/DashboardPage';
 
-            <p className="
-                mt-2
-                text-sm
-                text-slate-500
-            ">
-                Modul sedang dalam
-                pengembangan.
-            </p>
-        </div>
-    );
-}
+import {
+    PatientsPage,
+} from './features/patients/PatientsPage';
+
+import {
+    AppLayout,
+} from './layouts/AppLayout';
+
+import {
+    ModulePlaceholder,
+} from './components/ModulePlaceholder';
 
 const router =
     createBrowserRouter([
@@ -91,9 +62,62 @@ const router =
                     path: 'patients',
                     element: (
                         <RoleRoute
-                            roles={['FRONT_OFFICE']}
+                            roles={[
+                                'FRONT_OFFICE',
+                            ]}
                         >
                             <PatientsPage />
+                        </RoleRoute>
+                    ),
+                },
+
+                {
+                    path: 'master-data',
+                    element: (
+                        <RoleRoute
+                            roles={[
+                                'ADMIN',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Master Data"
+                                description="Hospital unit, payer, staff, dan doctor."
+                                owner="Ayu"
+                            />
+                        </RoleRoute>
+                    ),
+                },
+
+                {
+                    path: 'schedules',
+                    element: (
+                        <RoleRoute
+                            roles={[
+                                'FRONT_OFFICE',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Jadwal Dokter"
+                                description="Jadwal dokter dan kuota pelayanan."
+                                owner="Ayu"
+                            />
+                        </RoleRoute>
+                    ),
+                },
+
+                {
+                    path: 'bookings',
+                    element: (
+                        <RoleRoute
+                            roles={[
+                                'FRONT_OFFICE',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Booking"
+                                description="Booking pasien dan validasi kuota."
+                                owner="Ipeh"
+                            />
                         </RoleRoute>
                     ),
                 },
@@ -102,18 +126,34 @@ const router =
                     path:
                         'admission/outpatient',
                     element: (
-                        <ComingSoon
-                            title="Pendaftaran Rawat Jalan"
-                        />
+                        <RoleRoute
+                            roles={[
+                                'FRONT_OFFICE',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Pendaftaran Rawat Jalan"
+                                description="Registrasi pasien rawat jalan dan verifikasi."
+                                owner="Ipeh"
+                            />
+                        </RoleRoute>
                     ),
                 },
 
                 {
                     path: 'clinical',
                     element: (
-                        <ComingSoon
-                            title="Rawat Jalan"
-                        />
+                        <RoleRoute
+                            roles={[
+                                'DOCTOR',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Rawat Jalan"
+                                description="Encounter dan pelayanan klinis dokter."
+                                owner="Sava"
+                            />
+                        </RoleRoute>
                     ),
                 },
 
@@ -121,36 +161,76 @@ const router =
                     path:
                         'medical-record',
                     element: (
-                        <ComingSoon
-                            title="Rekam Medis"
-                        />
+                        <RoleRoute
+                            roles={[
+                                'DOCTOR',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Rekam Medis"
+                                description="SOAP, diagnosis, tindakan, terapi, dan rekam klinis."
+                                owner="Sava"
+                            />
+                        </RoleRoute>
+                    ),
+                },
+
+                {
+                    path: 'nursing',
+                    element: (
+                        <RoleRoute
+                            roles={[
+                                'NURSE',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Keperawatan"
+                                description="Pengkajian dan dokumentasi pelayanan keperawatan."
+                                owner="Vega"
+                            />
+                        </RoleRoute>
                     ),
                 },
 
                 {
                     path: 'billing',
                     element: (
-                        <ComingSoon
-                            title="Billing"
-                        />
+                        <RoleRoute
+                            roles={[
+                                'BILLING',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Billing"
+                                description="Tagihan, invoice, pembayaran, dan status billing."
+                                owner="Vega"
+                            />
+                        </RoleRoute>
                     ),
                 },
 
                 {
                     path: 'reports',
                     element: (
-                        <ComingSoon
-                            title="Laporan"
-                        />
+                        <RoleRoute
+                            roles={[
+                                'ADMIN',
+                            ]}
+                        >
+                            <ModulePlaceholder
+                                title="Laporan"
+                                description="Laporan operasional dan ringkasan SIMRS."
+                                owner="Vega"
+                            />
+                        </RoleRoute>
                     ),
                 },
-                
+
                 {
                     path: 'forbidden',
-                    element: (
-                        <ForbiddenPage />
-                    ),
-                }
+                    element:
+                        <ForbiddenPage />,
+                },
             ],
         },
     ]);

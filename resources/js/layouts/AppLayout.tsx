@@ -7,42 +7,27 @@ import {
     useAuth,
 } from '../features/auth/AuthContext';
 
-const menus = [
-    {
-        label: 'Dashboard',
-        to: '/',
-    },
-    {
-        label: 'Pasien',
-        to: '/patients',
-    },
-    {
-        label: 'Pendaftaran Rawat Jalan',
-        to: '/admission/outpatient',
-    },
-    {
-        label: 'Rawat Jalan',
-        to: '/clinical',
-    },
-    {
-        label: 'Rekam Medis',
-        to: '/medical-record',
-    },
-    {
-        label: 'Billing',
-        to: '/billing',
-    },
-    {
-        label: 'Laporan',
-        to: '/reports',
-    },
-];
+import {
+    canAccessNavigation,
+    navigationItems,
+} from '../config/navigation';
 
 export function AppLayout() {
     const {
         user,
         logout,
     } = useAuth();
+
+    const menus =
+        user
+            ? navigationItems.filter(
+                (menu) =>
+                    canAccessNavigation(
+                        user.role,
+                        menu.roles,
+                    ),
+            )
+            : [];
 
     async function handleLogout() {
         await logout();
@@ -105,12 +90,8 @@ export function AppLayout() {
                     {menus.map(
                         (menu) => (
                             <NavLink
-                                key={
-                                    menu.to
-                                }
-                                to={
-                                    menu.to
-                                }
+                                key={menu.to}
+                                to={menu.to}
                                 end={
                                     menu.to ===
                                     '/'
@@ -133,9 +114,7 @@ export function AppLayout() {
                                     `
                                 }
                             >
-                                {
-                                    menu.label
-                                }
+                                {menu.label}
                             </NavLink>
                         ),
                     )}
