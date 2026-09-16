@@ -28,4 +28,11 @@ Route::middleware('auth:sanctum')->group(function () {
             PatientController::class
         );
     });
+
+
+    Route::get('payers', [PayerController::class, 'index']);
+    Route::get('patients/{patient}/policies', [PatientPolicyController::class, 'index']);
+    Route::post('patients/{patient}/policies', [PatientPolicyController::class, 'store']);
+
+    
 });
