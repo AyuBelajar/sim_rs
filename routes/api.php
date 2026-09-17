@@ -1,7 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\HospitalUnitController;
+use App\Http\Controllers\Api\OutpatientRegistrationController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PatientPolicyController;
+use App\Http\Controllers\Api\PayerController;
 use Illuminate\Support\Facades\Route;
 
 Route::post(
@@ -26,6 +31,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource(
             'patients',
             PatientController::class
+        );
+
+        Route::apiResource(
+            'outpatient-registrations',
+            OutpatientRegistrationController::class
+        )->only(['index', 'store']);
+
+        Route::get(
+            'hospital-units',
+            [HospitalUnitController::class, 'index']
+        );
+
+        Route::get(
+            'doctors',
+            [DoctorController::class, 'index']
         );
     });
 

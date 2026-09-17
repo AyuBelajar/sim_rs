@@ -22,7 +22,7 @@ type Props = {
     patient: Patient | null;
 
     onClose: () => void;
-    onSaved: () => void;
+    onSaved: (patient: Patient) => void;
 };
 
 type FormState = {
@@ -245,18 +245,21 @@ export function PatientFormModal({
         };
 
         try {
+            let saved: Patient;
             if (patient) {
-                await updatePatient(
-                    patient.id,
-                    payload,
-                );
+                const response = await updatePatient(
+                     patient.id,
+                     payload,
+                 );
+                saved = response.data;
             } else {
-                await createPatient(
+                const response = await createPatient(
                     payload,
                 );
+                saved = response.data;
             }
 
-            onSaved();
+            onSaved(saved);
             onClose();
         } catch (error) {
             if (
