@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\HealthcareFacilityController;
 use App\Http\Controllers\Api\MedicalServiceCatalogController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\DoctorScheduleController;
 
 Route::post(
     'auth/login',
@@ -44,6 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('healthcare-facilities', [HealthcareFacilityController::class, 'index']);
     Route::get('medical-services', [MedicalServiceCatalogController::class, 'index']);
     Route::get('doctors', [DoctorController::class, 'index']);
+
+    Route::get('doctor-schedules', [DoctorScheduleController::class, 'index']);
+    Route::post('doctor-schedules', [DoctorScheduleController::class, 'store']);
+    Route::patch('doctor-schedules/{schedule}/quotas/{quota}', [DoctorScheduleController::class, 'updateQuota']);
 
     
 });
