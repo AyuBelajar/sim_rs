@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\HospitalUnitController;
 use App\Http\Controllers\Api\HealthcareFacilityController;
 use App\Http\Controllers\Api\MedicalServiceCatalogController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\DoctorController;
 
 Route::post(
     'auth/login',
@@ -42,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('hospital-units', [HospitalUnitController::class, 'index']);
     Route::get('healthcare-facilities', [HealthcareFacilityController::class, 'index']);
     Route::get('medical-services', [MedicalServiceCatalogController::class, 'index']);
+    Route::get('doctors', [DoctorController::class, 'index']);
 
     
 });
