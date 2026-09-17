@@ -2,6 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PayerController;
+use App\Http\Controllers\Api\PatientPolicyController;
+use App\Http\Controllers\Api\HospitalUnitController;
+use App\Http\Controllers\Api\HealthcareFacilityController;
+use App\Http\Controllers\Api\MedicalServiceCatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::post(
@@ -33,6 +38,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('payers', [PayerController::class, 'index']);
     Route::get('patients/{patient}/policies', [PatientPolicyController::class, 'index']);
     Route::post('patients/{patient}/policies', [PatientPolicyController::class, 'store']);
+
+    Route::get('hospital-units', [HospitalUnitController::class, 'index']);
+    Route::get('healthcare-facilities', [HealthcareFacilityController::class, 'index']);
+    Route::get('medical-services', [MedicalServiceCatalogController::class, 'index']);
 
     
 });

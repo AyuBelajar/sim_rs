@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             PayerSeeder::class,
             StaffDoctorSeeder::class,
             DoctorScheduleSeeder::class,
+            HealthcareFacilitySeeder::class,
+            MedicalServiceCatalogSeeder::class,
         ]);
 
         if (app()->environment('local')) {
