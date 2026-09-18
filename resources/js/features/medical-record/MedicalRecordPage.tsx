@@ -1,364 +1,319 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-// Dummy list antrean pasien rawat jalan untuk simulasi
-const DUMMY_PATIENT_QUEUE = [
-    { id: 101, registrationNo: 'RJ-20260917-001', name: 'Budi Santoso', mrNo: 'RM-00192', age: '45 Thn', poly: 'Poli Dalam', doctor: 'dr. Sava, Sp.PD', payer: 'BPJS Kesehatan', status: 'WAITING' },
-    { id: 102, registrationNo: 'RJ-20260917-002', name: 'Siti Rahma', mrNo: 'RM-00215', age: '28 Thn', poly: 'Poli Umum', doctor: 'dr. Sava, Sp.PD', payer: 'Umum / Mandiri', status: 'WAITING' },
-    { id: 103, registrationNo: 'RJ-20260917-003', name: 'Ahmad Dahlan', mrNo: 'RM-00301', age: '60 Thn', poly: 'Poli Dalam', doctor: 'dr. Sava, Sp.PD', payer: 'BPJS Kesehatan', status: 'IN_SERVICE' }
+interface PatientRecord {
+  id: string;
+  mrn: string;
+  name: string;
+  age: string;
+  gender: string;
+  poly: string;
+  doctor: string;
+  visitDate: string;
+  diagnosis: string;
+  vitals: { bp: string; pulse: string; temp: string };
+  soap: { subjective: string; objective: string; assessment: string; plan: string };
+  prescriptions: string[];
+}
+
+const ARCHIVED_RECORDS: PatientRecord[] = [
+  {
+    id: 'ENC-001',
+    mrn: 'RM-2026-0891',
+    name: 'Siti Aminah',
+    age: '34 Tahun',
+    gender: 'Perempuan',
+    poly: 'Poli Umum',
+    doctor: 'dr. Sava, Sp.PD',
+    visitDate: '18 September 2026',
+    diagnosis: 'J00 - Acute Nasopharyngitis (Common Cold)',
+    vitals: { bp: '120/80 mmHg', pulse: '80 x/mnt', temp: '36.8 °C' },
+    soap: {
+      subjective: 'Pasien mengeluhkan batuk dan pilek sejak 2 hari yang lalu.',
+      objective: 'Tenggorokan hiperemis (-), wheezing (-).',
+      assessment: 'ISPA ringan.',
+      plan: 'Istirahat cukup dan terapi simtomatik.',
+    },
+    prescriptions: ['Paracetamol 500mg 3x1', 'Vitamin C 500mg 1x1'],
+  },
+  {
+    id: 'ENC-002',
+    mrn: 'RM-2026-0892',
+    name: 'Budi Santoso',
+    age: '45 Tahun',
+    gender: 'Laki-laki',
+    poly: 'Poli Dalam',
+    doctor: 'dr. Sava, Sp.PD',
+    visitDate: '17 September 2026',
+    diagnosis: 'I10 - Essential (Primary) Hypertension',
+    vitals: { bp: '145/90 mmHg', pulse: '84 x/mnt', temp: '36.5 °C' },
+    soap: {
+      subjective: 'Kepala terasa berat di bagian tengkuk.',
+      objective: 'TD 145/90 mmHg.',
+      assessment: 'Hipertensi Grade 1.',
+      plan: 'Edukasi diet rendah garam dan antihipertensi.',
+    },
+    prescriptions: ['Amlodipine 5mg 1x1 (Malam)'],
+  },
 ];
 
 export function MedicalRecordPage() {
-    // States Pasien & Encounter
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState<PatientRecord | null>(null);
+  const [activePrintType, setActivePrintType] = useState<'SICK_LEAVE' | 'MEDICAL_SUMMARY' | null>(null);
 
-    // Navigasi Tab Utama & Sub Tab
-    const [mainTab, setMainTab] = useState<'detail' | 'pelayanan' | 'askep' | 'billing' | 'selesai'>('pelayanan');
-    const [activeTab, setActiveTab] = useState<'vitals' | 'soap' | 'diagnosis' | 'icd9' | 'prescription' | 'ihs'>('vitals');
+  const filteredRecords = ARCHIVED_RECORDS.filter(
+    (r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()) || r.mrn.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-    // Form States
-    const [vitals, setVitals] = useState({ systolic_bp: '', diastolic_bp: '', temperature_c: '', pulse_rate: '', respiratory_rate: '', weight_kg: '', height_cm: '' });
-    const [soap, setSoap] = useState({ subjective: '', objective: '', assessment: '', plan: '' });
-    const [diagnosis, setDiagnosis] = useState({ icd10_code: '', diagnosis_name: '', diagnosis_type: 'PRIMARY' });
-    const [icd9, setIcd9] = useState({ icd9_code: '', procedure_name: '' });
-    const [prescription, setPrescription] = useState({ medicine_name: '', dosage: '', frequency: '3x1', quantity: '10' });
+  const handlePrint = () => {
+    window.print();
+  };
 
-    // Handler Pilih Pasien
-    const handleLayaniPasien = (patient: any) => {
-        setLoading(true);
-        setSelectedPatient(patient);
-        setTimeout(() => setLoading(false), 300);
-    };
+  return (
+    <div className="space-y-6">
+      {/* Header Modal Cetak (CSS Print Rule) */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #printable-area, #printable-area * { visibility: visible; }
+          #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
 
-    // Submits
-    const handleSaveVitals = (e: React.FormEvent) => {
-        e.preventDefault();
-        alert('Tanda Vital & Anamnesa berhasil disimpan!');
-    };
+      {/* Header Halaman */}
+      <div className="no-print">
+        <h1 className="text-2xl font-bold text-slate-800">Arsip Rekam Medis Elekronik</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Pencarian dokumen riwayat medis pasien terintegrasi dari Pelayanan Rawat Jalan.
+        </p>
+      </div>
 
-    const handleSaveSoap = (e: React.FormEvent) => {
-        e.preventDefault();
-        alert('Catatan SOAP berhasil disimpan!');
-    };
-
-    const handleSaveDiagnosis = (e: React.FormEvent) => {
-        e.preventDefault();
-        alert('Diagnosis ICD-10 berhasil ditambahkan!');
-    };
-
-    const handleSavePrescription = (e: React.FormEvent) => {
-        e.preventDefault();
-        alert('Resep obat berhasil ditambahkan!');
-    };
-
-    // -------------------------------------------------------------
-    // TAMPILAN 1: LIST PASIEN RAWAT JALAN (Jika belum pilih pasien)
-    // -------------------------------------------------------------
-    if (!selectedPatient) {
-        return (
-            <div className="space-y-5 p-2">
-                <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div>
-                        <h1 className="text-xl font-bold text-slate-800">Antrean Pelayanan Rawat Jalan</h1>
-                        <p className="text-xs text-slate-500 mt-0.5">Pilih pasien untuk memulai pelayanan rekam medis</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
-                            Lihat Data IHS (Kemenkes)
-                        </button>
-                        <button className="px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors">
-                            i-Care JKN
-                        </button>
-                    </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-                            <tr>
-                                <th className="p-3">NO. REGISTRASI</th>
-                                <th className="p-3">NO. RM</th>
-                                <th className="p-3">NAMA PASIEN</th>
-                                <th className="p-3">POLI / DOKTER</th>
-                                <th className="p-3">PENJAMIN</th>
-                                <th className="p-3">STATUS</th>
-                                <th className="p-3 text-center">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {DUMMY_PATIENT_QUEUE.map((patient) => (
-                                <tr 
-                                    key={patient.id} 
-                                    className="hover:bg-slate-50 transition-colors"
-                                >
-                                    <td className="p-3 font-medium text-slate-700">{patient.registrationNo}</td>
-                                    <td className="p-3 text-slate-600 font-mono">{patient.mrNo}</td>
-                                    <td className="p-3 font-semibold text-slate-800">{patient.name} <span className="text-slate-400 font-normal">({patient.age})</span></td>
-                                    <td className="p-3 text-slate-600">{patient.poly}<br/><span className="text-slate-400">{patient.doctor}</span></td>
-                                    <td className="p-3 text-slate-600">{patient.payer}</td>
-                                    <td className="p-3">
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${patient.status === 'IN_SERVICE' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
-                                            {patient.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <button 
-                                            onClick={() => handleLayaniPasien(patient)} 
-                                            className="px-3 py-1 text-white rounded-md text-xs font-medium transition-colors shadow-sm"
-                                            style={{ background: '#326D8C' }}
-                                        >
-                                            Layani
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+      {/* TAMPILAN 1: DAFTAR ARSIP REKAM MEDIS */}
+      {!selectedRecord ? (
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm no-print">
+          <div className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 className="font-bold text-slate-800 text-base">Arsip Riwayat Kunjungan Pasien</h2>
+            <div className="w-full md:w-80">
+              <input
+                type="text"
+                placeholder="Cari Nama / No. RM Pasien..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2 text-sm focus:outline-none focus:bg-white focus:border-slate-300 placeholder:text-slate-400"
+              />
             </div>
-        );
-    }
+          </div>
 
-    if (loading) return <div className="p-8 text-center text-slate-500 font-medium text-sm">Memuat data pemeriksaan medis...</div>;
-
-    // -------------------------------------------------------------
-    // TAMPILAN 2: FORM PELAYANAN RAWAT JALAN (Saat melayani pasien)
-    // -------------------------------------------------------------
-    return (
-        <div className="space-y-4 p-2">
-            {/* Header Sticky Banner Pasien */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setSelectedPatient(null)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs font-semibold transition-colors">
-                        ← Kembali
-                    </button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-bold text-slate-800">Pemeriksaan Rawat Jalan - {selectedPatient.name}</h1>
-                            <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-extrabold">{selectedPatient.status}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            No. RM: <span className="font-mono text-slate-700">{selectedPatient.mrNo}</span> | Reg: <span className="font-mono text-slate-700">{selectedPatient.registrationNo}</span> | DPJP: {selectedPatient.doctor}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Shortcut Quick Action Modul */}
-                <div className="flex gap-1.5">
-                    <button className="px-2.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium">RM Pasien</button>
-                    <button className="px-2.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium">Surat Medis</button>
-                    <button className="px-2.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium">Cetak CPPT</button>
-                    <button className="px-2.5 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium">i-Care JKN</button>
-                </div>
-            </div>
-
-            {/* Main Tabs Navigasi Utama */}
-            <div className="flex border-b border-slate-200 bg-white rounded-t-xl px-2 pt-2 gap-2 text-xs font-semibold text-slate-600">
-                {[
-                    ['detail', 'Tab Detail Pasien'],
-                    ['pelayanan', 'Pelayanan Medis'],
-                    ['askep', 'Tab Askep (Keperawatan)'],
-                    ['billing', 'Tab Billing / Tindakan'],
-                    ['selesai', 'Selesai Pelayanan']
-                ].map(([key, label]) => (
-                    <button
-                        key={key}
-                        onClick={() => setMainTab(key as any)}
-                        className={`px-4 py-2.5 rounded-t-lg transition-colors ${
-                            mainTab === key ? 'bg-slate-100 border-b-2 text-[#326D8C] font-bold' : 'hover:bg-slate-50'
-                        }`}
-                        style={{ borderColor: mainTab === key ? '#326D8C' : 'transparent' }}
-                    >
-                        {label}
-                    </button>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-slate-700 font-semibold border-t border-b border-slate-100 bg-white">
+                <tr>
+                  <th className="px-6 py-4">Tgl. Kunjungan</th>
+                  <th className="px-6 py-4">No. RM</th>
+                  <th className="px-6 py-4">Nama Pasien</th>
+                  <th className="px-6 py-4">Poliklinik / Dokter</th>
+                  <th className="px-6 py-4">Diagnosis Utama</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {filteredRecords.map((record) => (
+                  <tr key={record.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-6 py-5 text-slate-600 font-medium">{record.visitDate}</td>
+                    <td className="px-6 py-5 font-mono font-bold text-slate-800">{record.mrn}</td>
+                    <td className="px-6 py-5 font-bold text-slate-800">{record.name}</td>
+                    <td className="px-6 py-5 text-slate-600">{record.poly}<br/><span className="text-xs text-slate-400">{record.doctor}</span></td>
+                    <td className="px-6 py-5 text-slate-700 font-medium">{record.diagnosis}</td>
+                    <td className="px-6 py-5 text-right">
+                      <button
+                        onClick={() => setSelectedRecord(record)}
+                        className="px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-90"
+                        style={{ background: '#FEEFAD', color: '#855B14' }}
+                      >
+                        Lihat Arsip RM →
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-            </div>
-
-            {/* Content Body Berdasarkan Tab Utama */}
-            <div className="bg-white border border-slate-200 rounded-b-xl p-5 shadow-sm">
-
-                {/* TAB 1: PELAYANAN MEDIS */}
-                {mainTab === 'pelayanan' && (
-                    <div className="space-y-4">
-                        {/* Sub Navigasi Pelayanan */}
-                        <div className="flex gap-2 border-b border-slate-100 pb-3 text-xs font-medium overflow-x-auto">
-                            {[
-                                ['vitals', 'Tanda Vital & Anamnesa'],
-                                ['soap', 'SOAP Medis'],
-                                ['diagnosis', 'Diagnosa ICD-10'],
-                                ['icd9', 'Prosedur ICD-9'],
-                                ['prescription', 'Resep Obat'],
-                                ['ihs', 'Integrasi IHS Kemenkes']
-                            ].map(([key, label]) => (
-                                <button
-                                    key={key}
-                                    onClick={() => setActiveTab(key as any)}
-                                    className={`px-3 py-1.5 rounded-md transition-colors ${
-                                        activeTab === key ? 'text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                    }`}
-                                    style={{ background: activeTab === key ? '#326D8C' : undefined }}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Form Sub-Tab: Vital Signs */}
-                        {activeTab === 'vitals' && (
-                            <form onSubmit={handleSaveVitals} className="space-y-4 max-w-3xl">
-                                <h3 className="text-sm font-bold text-slate-700">Pemeriksaan Tanda Vital Pasien</h3>
-                                <div className="grid grid-cols-3 gap-3 text-xs">
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Sistolik (mmHg)</label>
-                                        <input type="number" placeholder="120" value={vitals.systolic_bp} onChange={(e) => setVitals({ ...vitals, systolic_bp: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Diastolik (mmHg)</label>
-                                        <input type="number" placeholder="80" value={vitals.diastolic_bp} onChange={(e) => setVitals({ ...vitals, diastolic_bp: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Suhu (°C)</label>
-                                        <input type="number" step="0.1" placeholder="36.5" value={vitals.temperature_c} onChange={(e) => setVitals({ ...vitals, temperature_c: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Nadi (x/menit)</label>
-                                        <input type="number" placeholder="80" value={vitals.pulse_rate} onChange={(e) => setVitals({ ...vitals, pulse_rate: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Pernapasan (x/menit)</label>
-                                        <input type="number" placeholder="20" value={vitals.respiratory_rate} onChange={(e) => setVitals({ ...vitals, respiratory_rate: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                </div>
-                                <button type="submit" className="px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm" style={{ background: '#326D8C' }}>Simpan Tanda Vital</button>
-                            </form>
-                        )}
-
-                        {/* Form Sub-Tab: SOAP */}
-                        {activeTab === 'soap' && (
-                            <form onSubmit={handleSaveSoap} className="space-y-3 max-w-3xl text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Catatan SOAP Dokter</h3>
-                                <div>
-                                    <label className="block text-slate-600 mb-1 font-semibold">Subjective (S) - Keluhan Utama</label>
-                                    <textarea rows={2} value={soap.subjective} onChange={(e) => setSoap({ ...soap, subjective: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" placeholder="Keluhan yang dirasakan pasien..." />
-                                </div>
-                                <div>
-                                    <label className="block text-slate-600 mb-1 font-semibold">Objective (O) - Hasil Pemeriksaan Fisik</label>
-                                    <textarea rows={2} value={soap.objective} onChange={(e) => setSoap({ ...soap, objective: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" placeholder="Pemeriksaan fisik / hasil penunjang..." />
-                                </div>
-                                <div>
-                                    <label className="block text-slate-600 mb-1 font-semibold">Assessment (A) - Penilaian / Diagnosis Kerja</label>
-                                    <textarea rows={2} value={soap.assessment} onChange={(e) => setSoap({ ...soap, assessment: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" placeholder="Kesimpulan medis dokter..." />
-                                </div>
-                                <div>
-                                    <label className="block text-slate-600 mb-1 font-semibold">Plan (P) - Rencana Terapi / Edukasi</label>
-                                    <textarea rows={2} value={soap.plan} onChange={(e) => setSoap({ ...soap, plan: e.target.value })} className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" placeholder="Rencana pengobatan / tindakan..." />
-                                </div>
-                                <button type="submit" className="px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm" style={{ background: '#326D8C' }}>Simpan SOAP</button>
-                            </form>
-                        )}
-
-                        {/* Form Sub-Tab: ICD-10 */}
-                        {activeTab === 'diagnosis' && (
-                            <form onSubmit={handleSaveDiagnosis} className="space-y-3 max-w-2xl text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Input Diagnosis ICD-10</h3>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Kode ICD-10</label>
-                                        <input value={diagnosis.icd10_code} onChange={(e) => setDiagnosis({ ...diagnosis, icd10_code: e.target.value })} placeholder="J00" className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-slate-600 mb-1">Nama Diagnosis</label>
-                                        <input value={diagnosis.diagnosis_name} onChange={(e) => setDiagnosis({ ...diagnosis, diagnosis_name: e.target.value })} placeholder="Acute nasopharyngitis [common cold]" className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                </div>
-                                <button type="submit" className="px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm" style={{ background: '#326D8C' }}>+ Tambah Diagnosis</button>
-                            </form>
-                        )}
-
-                        {/* Form Sub-Tab: ICD-9 */}
-                        {activeTab === 'icd9' && (
-                            <form onSubmit={(e) => { e.preventDefault(); alert('Prosedur ICD-9 disimpan!'); }} className="space-y-3 max-w-2xl text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Input Prosedur ICD-9-CM</h3>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-slate-600 mb-1">Kode ICD-9</label>
-                                        <input value={icd9.icd9_code} onChange={(e) => setIcd9({ ...icd9, icd9_code: e.target.value })} placeholder="89.52" className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-slate-600 mb-1">Nama Prosedur</label>
-                                        <input value={icd9.procedure_name} onChange={(e) => setIcd9({ ...icd9, procedure_name: e.target.value })} placeholder="Electrocardiogram" className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]" />
-                                    </div>
-                                </div>
-                                <button type="submit" className="px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm" style={{ background: '#326D8C' }}>+ Tambah Prosedur</button>
-                            </form>
-                        )}
-
-                        {/* Form Sub-Tab: Resep */}
-                        {activeTab === 'prescription' && (
-                            <form onSubmit={handleSavePrescription} className="space-y-3 max-w-2xl text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Peresepan Obat</h3>
-                                <div className="grid grid-cols-4 gap-2">
-                                    <input placeholder="Nama Obat" value={prescription.medicine_name} onChange={(e) => setPrescription({ ...prescription, medicine_name: e.target.value })} className="col-span-2 border rounded-lg p-2" />
-                                    <input placeholder="Aturan Pakai" value={prescription.frequency} onChange={(e) => setPrescription({ ...prescription, frequency: e.target.value })} className="border rounded-lg p-2" />
-                                    <input placeholder="Jumlah" value={prescription.quantity} onChange={(e) => setPrescription({ ...prescription, quantity: e.target.value })} className="border rounded-lg p-2 text-center" />
-                                </div>
-                                <button type="submit" className="px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm" style={{ background: '#326D8C' }}>+ Tambah Resep</button>
-                            </form>
-                        )}
-
-                        {/* Form Sub-Tab: IHS Integrasi */}
-                        {activeTab === 'ihs' && (
-                            <div className="space-y-3 max-w-lg text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Integrasi SatuSehat / IHS (Kemenkes)</h3>
-                                <p className="text-slate-500">Kirimkan data pendaftaran, ICD-10, ICD-9, dan diet pasien ke platform IHS Kemenkes.</p>
-                                <button onClick={() => alert('Data berhasil dikirim ke IHS Kemenkes!')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm">Kirim Data IHS</button>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* TAB 2: DETAIL PASIEN */}
-                {mainTab === 'detail' && (
-                    <div className="text-xs space-y-2 text-slate-600">
-                        <h3 className="font-bold text-sm text-slate-800">Informasi Detail Pasien</h3>
-                        <p>Status Peserta: <b>Prolanis & PRB (BPJS PCare)</b></p>
-                        <p>Penjamin: <b>{selectedPatient.payer}</b></p>
-                        <p>Catatan Booking: Pasien melakukan reservasi via Mobile JKN.</p>
-                    </div>
-                )}
-
-                {/* TAB 3: ASKEP */}
-                {mainTab === 'askep' && (
-                    <div className="text-xs space-y-2 text-slate-600">
-                        <h3 className="font-bold text-sm text-slate-800">Asuhan Keperawatan (Askep)</h3>
-                        <p className="text-slate-500">Form pengisian triase perawat dan pengkajian awal keperawatan rawat jalan.</p>
-                    </div>
-                )}
-
-                {/* TAB 4: BILLING */}
-                {mainTab === 'billing' && (
-                    <div className="text-xs space-y-2 text-slate-600">
-                        <h3 className="font-bold text-sm text-slate-800">Billing & Tindakan</h3>
-                        <p className="text-slate-500">Daftar tindakan medis dan tarif pelayanan pasien rawat jalan.</p>
-                    </div>
-                )}
-
-                {/* TAB 5: SELESAI PELAYANAN */}
-                {mainTab === 'selesai' && (
-                    <div className="space-y-3 max-w-md text-xs">
-                        <h3 className="font-bold text-sm text-slate-800">Form Selesai Pelayanan</h3>
-                        <div>
-                            <label className="block mb-1 font-medium text-slate-700">Selesai Pelayanan?</label>
-                            <select className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]"><option>Ya</option><option>Tidak</option></select>
-                        </div>
-                        <div>
-                            <label className="block mb-1 font-medium text-slate-700">Cara Keluar</label>
-                            <select className="w-full border rounded-lg p-2 focus:outline-none focus:border-[#326D8C]"><option>Pulang / Berobat Jalan</option><option>Kontrol Ulang</option><option>Rujuk</option></select>
-                        </div>
-                        <button onClick={() => { alert('Pelayanan Selesai!'); setSelectedPatient(null); }} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold shadow-sm">Simpan & Selesaikan</button>
-                    </div>
-                )}
-            </div>
+              </tbody>
+            </table>
+          </div>
         </div>
-    );
+      ) : (
+        /* TAMPILAN 2: DETAIL REKAM MEDIS (READ-ONLY) & CETAK SURAT */
+        <div className="space-y-6 no-print">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="text-xs font-semibold px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600"
+                >
+                  ← Kembali
+                </button>
+                <h2 className="text-xl font-bold text-slate-800">Rekam Medis: {selectedRecord.name}</h2>
+                <span className="px-3 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                  🔒 READ-ONLY
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 mt-2">
+                No. RM: <span className="font-mono font-semibold text-slate-700">{selectedRecord.mrn}</span> | Usia: {selectedRecord.age} | DPJP: {selectedRecord.doctor}
+              </p>
+            </div>
+
+            {/* Tombol Cetak Surat */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActivePrintType('SICK_LEAVE')}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-colors shadow-sm"
+              >
+                📄 Cetak Surat Ket. Sakit
+              </button>
+              <button
+                onClick={() => setActivePrintType('MEDICAL_SUMMARY')}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-700 text-white hover:bg-sky-800 transition-colors shadow-sm"
+              >
+                🖨️ Cetak Ringkasan CPPT
+              </button>
+            </div>
+          </div>
+
+          {/* Tampilan Konten Rekam Medis Read-Only */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+            <div className="border-b pb-4">
+              <h3 className="text-sm font-bold text-slate-800 mb-2">1. Tanda-Tanda Vital</h3>
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl">Tekanan Darah: <b>{selectedRecord.vitals.bp}</b></div>
+                <div className="p-3 bg-slate-50 rounded-xl">Nadi: <b>{selectedRecord.vitals.pulse}</b></div>
+                <div className="p-3 bg-slate-50 rounded-xl">Suhu Tubuh: <b>{selectedRecord.vitals.temp}</b></div>
+              </div>
+            </div>
+
+            <div className="border-b pb-4">
+              <h3 className="text-sm font-bold text-slate-800 mb-2">2. Catatan SOAP Dokter</h3>
+              <div className="space-y-2 text-xs">
+                <p><b>Subjective (S):</b> {selectedRecord.soap.subjective}</p>
+                <p><b>Objective (O):</b> {selectedRecord.soap.objective}</p>
+                <p><b>Assessment (A):</b> {selectedRecord.soap.assessment}</p>
+                <p><b>Plan (P):</b> {selectedRecord.soap.plan}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 mb-2">3. Diagnosis & Terapi Obat</h3>
+              <p className="text-xs mb-2"><b>Diagnosis:</b> {selectedRecord.diagnosis}</p>
+              <div className="text-xs">
+                <b>Resep Obat:</b>
+                <ul className="list-disc ml-5 mt-1 text-slate-600">
+                  {selectedRecord.prescriptions.map((rx, idx) => (
+                    <li key={idx}>{rx}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL PREVIEW SURAT & FORMAT CETAK (Kertas A4 untuk di-Print) */}
+      {/* ========================================================================= */}
+      {activePrintType && selectedRecord && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6">
+            
+            {/* Action Bar Modal */}
+            <div className="flex justify-between items-center no-print border-b pb-3">
+              <h3 className="font-bold text-slate-800">Preview Dokumen Cetak</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700"
+                >
+                  🖨️ Cetak Sekarang
+                </button>
+                <button
+                  onClick={() => setActivePrintType(null)}
+                  className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-200"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+
+            {/* AREA LEMBAR KERTAS SURAT (ID: printable-area) */}
+            <div id="printable-area" className="p-8 border border-slate-300 rounded-lg bg-white text-black font-serif text-sm leading-relaxed">
+              
+              {/* KOP SURAT RUMAH SAKIT */}
+              <div className="text-center border-b-2 border-black pb-4 mb-6">
+                <h2 className="text-xl font-bold uppercase tracking-wide">RUMAH SAKIT UTAMA SEHAT</h2>
+                <p className="text-xs font-sans">Jl. Raya Kesehatan No. 10, Surabaya | Telp: (031) 555-1234</p>
+              </div>
+
+              {/* FORMAT SURAT KETERANGAN SAKIT */}
+              {activePrintType === 'SICK_LEAVE' && (
+                <div className="space-y-4">
+                  <h3 className="text-center font-bold text-base underline uppercase">SURAT KETERANGAN SAKIT</h3>
+                  <p className="text-center text-xs -mt-3">No: 108/SK/RSU/{selectedRecord.id}</p>
+
+                  <p className="mt-6">Yang bertanda tangan di bawah ini menerangkan bahwa:</p>
+                  
+                  <div className="ml-6 space-y-1 font-sans text-xs">
+                    <p><span className="w-32 inline-block">Nama Pasien</span>: <b>{selectedRecord.name}</b></p>
+                    <p><span className="w-32 inline-block">No. Rekam Medis</span>: {selectedRecord.mrn}</p>
+                    <p><span className="w-32 inline-block">Umur / Gender</span>: {selectedRecord.age} / {selectedRecord.gender}</p>
+                  </div>
+
+                  <p className="mt-4">
+                    Berhubungan dengan keadaan sakitnya, pasien tersebut di atas memerlukan istirahat berobat selama <b>2 (dua) hari</b> terhitung sejak tanggal <b>{selectedRecord.visitDate}</b>.
+                  </p>
+
+                  <div className="mt-12 flex justify-end">
+                    <div className="text-center font-sans text-xs">
+                      <p>Surabaya, {selectedRecord.visitDate}</p>
+                      <p className="mb-16">Dokter Pemeriksa,</p>
+                      <p className="font-bold underline">{selectedRecord.doctor}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* FORMAT RINGKASAN REKAM MEDIS (CPPT) */}
+              {activePrintType === 'MEDICAL_SUMMARY' && (
+                <div className="space-y-4 font-sans text-xs">
+                  <h3 className="text-center font-bold text-base underline uppercase font-serif">RINGKASAN REKAM MEDIS RAWAT JALAN</h3>
+                  
+                  <div className="grid grid-cols-2 gap-2 border p-3 rounded bg-slate-50">
+                    <p><b>Nama:</b> {selectedRecord.name}</p>
+                    <p><b>No. RM:</b> {selectedRecord.mrn}</p>
+                    <p><b>Tgl. Periksa:</b> {selectedRecord.visitDate}</p>
+                    <p><b>Poliklinik:</b> {selectedRecord.poly}</p>
+                  </div>
+
+                  <div className="border p-3 rounded space-y-2">
+                    <p className="font-bold border-b pb-1">HASIL PEMERIKSAAN MEDIS</p>
+                    <p><b>Vital Signs:</b> TD {selectedRecord.vitals.bp}, Nadi {selectedRecord.vitals.pulse}, Suhu {selectedRecord.vitals.temp}</p>
+                    <p><b>Keluhan (S):</b> {selectedRecord.soap.subjective}</p>
+                    <p><b>Pemeriksaan (O):</b> {selectedRecord.soap.objective}</p>
+                    <p><b>Diagnosis (A):</b> {selectedRecord.diagnosis}</p>
+                    <p><b>Rencana (P):</b> {selectedRecord.soap.plan}</p>
+                  </div>
+
+                  <div className="mt-8 flex justify-end">
+                    <div className="text-center">
+                      <p>Dokter Penanggung Jawab,</p>
+                      <p className="mb-12"></p>
+                      <p className="font-bold underline">{selectedRecord.doctor}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
