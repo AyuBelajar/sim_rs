@@ -32,6 +32,14 @@ import {
 } from './features/clinical/ClinicalEncounterPage';
 
 import {
+    SchedulesPage,
+} from './features/scheduling/SchedulesPage';
+
+import {
+    MasterDataPage,
+} from './features/master-data/MasterDataPage';
+
+import {
     AppLayout,
 } from './layouts/AppLayout';
 
@@ -78,33 +86,16 @@ const router =
                 {
                     path: 'master-data',
                     element: (
-                        <RoleRoute
-                            roles={[
-                                'ADMIN',
-                            ]}
-                        >
-                            <ModulePlaceholder
-                                title="Master Data"
-                                description="Hospital unit, payer, staff, dan doctor."
-                                owner="Ayu"
-                            />
+                        <RoleRoute roles={['ADMIN']}>
+                            <MasterDataPage />
                         </RoleRoute>
                     ),
                 },
-
                 {
                     path: 'schedules',
                     element: (
-                        <RoleRoute
-                            roles={[
-                                'FRONT_OFFICE',
-                            ]}
-                        >
-                            <ModulePlaceholder
-                                title="Jadwal Dokter"
-                                description="Jadwal dokter dan kuota pelayanan."
-                                owner="Ayu"
-                            />
+                        <RoleRoute roles={['FRONT_OFFICE']}>
+                            <SchedulesPage />
                         </RoleRoute>
                     ),
                 },
