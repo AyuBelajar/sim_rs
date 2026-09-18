@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import icd10Data from '../../data/icd10.json';
+import icd9Data from '../../data/icd9.json';
 import { 
     getEncounter, 
     storeVitals, 
@@ -7,41 +9,24 @@ import {
     storeDiagnosis 
 } from './clinicalApi';
 
-// ==========================================
-// DATASET ICD-10 (DIAGNOSIS) & ICD-9 (TINDAKAN)
-// ==========================================
-const ICD10_DATA = [
-    { code: 'J00', name: 'Acute nasopharyngitis [common cold]' },
-    { code: 'J02.9', name: 'Acute pharyngitis, unspecified' },
-    { code: 'I10', name: 'Essential (primary) hypertension' },
-    { code: 'E11.9', name: 'Type 2 diabetes mellitus without complications' },
-    { code: 'K29.7', name: 'Gastritis, unspecified' },
-    { code: 'A09', name: 'Infectious gastroenteritis and colitis, unspecified' },
-    { code: 'R50.9', name: 'Fever, unspecified' },
-    { code: 'R51', name: 'Headache' },
-    { code: 'J45.909', name: 'Unspecified asthma, uncomplicated' },
-    { code: 'M79.1', name: 'Myalgia' },
-    { code: 'L23.9', name: 'Allergic contact dermatitis, unspecified cause' },
-    { code: 'H10.9', name: 'Unspecified conjunctivitis' }
-];
-
-const ICD9_DATA = [
-    { code: '89.52', name: 'Electrocardiogram (EKG/ECG)' },
-    { code: '88.76', name: 'Diagnostic ultrasound of abdomen' },
-    { code: '86.59', name: 'Suturing of skin and subcutaneous tissue (Penjahitan Luka)' },
-    { code: '93.57', name: 'Application of other wound dressing (Ganti Balut)' },
-    { code: '96.04', name: 'Insertion of endotracheal tube' },
-    { code: '87.44', name: 'Routine chest x-ray' },
-    { code: '90.59', name: 'Microscopic examination of blood' },
-    { code: '99.21', name: 'Injection of antibiotic' }
-];
-
 // Data Dummy Antrean Pasien
 const DUMMY_PATIENT_QUEUE = [
     { id: 101, mrn: 'RM-2026-0891', name: 'Siti Aminah', age: '34 Tahun', gender: 'Perempuan', poly: 'Poli Umum', status: 'Sedang Dilayani' },
     { id: 102, mrn: 'RM-2026-0892', name: 'Budi Santoso', age: '45 Tahun', gender: 'Laki-laki', poly: 'Poli Dalam', status: 'Menunggu' },
     { id: 103, mrn: 'RM-2026-0893', name: 'Dewi Lestari', age: '28 Tahun', gender: 'Perempuan', poly: 'Poli Umum', status: 'Selesai' }
 ];
+
+// Helper ekstraksi Kode & Nama dari JSON bentuk apapun (A/B, code/name, 0/1, dll)
+const parseIcdItem = (item: any) => {
+    if (!item) return { code: '', name: '' };
+    const keys = Object.keys(item);
+    
+    // Jika format standar { A: "...", B: "..." } atau { code: "...", name: "..." }
+    const code = String(item.A || item.code || item.ICD10_CODE || item.ICD9_CODE || item[keys[0]] || '').trim();
+    const name = String(item.B || item.name || item.DISPLAY || item.description || item[keys[1]] || item[keys[0]] || '').trim();
+    
+    return { code, name };
+};
 
 export function ClinicalEncounterPage() {
     const { encounterId } = useParams();
@@ -85,16 +70,55 @@ export function ClinicalEncounterPage() {
         }
     }, [encounterId]);
 
-    // Filters for ICD Lists
-    const filteredIcd10 = ICD10_DATA.filter(
-        item => item.code.toLowerCase().includes(icd10Search.toLowerCase()) || 
-                item.name.toLowerCase().includes(icd10Search.toLowerCase())
-    );
+    // Pencarian ICD-10 Super Cepat (Total 18.453+ Data)
+    const filteredIcd10 = useMemo(() => {
+        const query = icd10Search.toLowerCase().trim();
+        const list = icd10Data as any[];
+        const results = [];
 
-    const filteredIcd9 = ICD9_DATA.filter(
-        item => item.code.toLowerCase().includes(icd9Search.toLowerCase()) || 
-                item.name.toLowerCase().includes(icd9Search.toLowerCase())
-    );
+        for (let i = 0; i < list.length; i++) {
+            const { code, name } = parseIcdItem(list[i]);
+            if (!code || code.toLowerCase() === 'code' || code.toLowerCase() === 'kode') continue;
+
+            if (!query) {
+                // Tampilkan 100 data awal jika kolom search kosong
+                results.push({ code, name });
+                if (results.length >= 100) break;
+            } else {
+                // Pindai SELURUH 18.000+ data sampai ketemu yang cocok
+                if (code.toLowerCase().includes(query) || name.toLowerCase().includes(query)) {
+                    results.push({ code, name });
+                    if (results.length >= 200) break; // Ambil hingga 200 hasil pencarian
+                }
+            }
+        }
+        return results;
+    }, [icd10Search]);
+
+    // Pencarian ICD-9 Super Cepat (Total 4.627+ Data)
+    const filteredIcd9 = useMemo(() => {
+        const query = icd9Search.toLowerCase().trim();
+        const list = icd9Data as any[];
+        const results = [];
+
+        for (let i = 0; i < list.length; i++) {
+            const { code, name } = parseIcdItem(list[i]);
+            if (!code || code.toLowerCase() === 'code' || code.toLowerCase() === 'kode') continue;
+
+            if (!query) {
+                // Tampilkan 100 data awal jika kolom search kosong
+                results.push({ code, name });
+                if (results.length >= 100) break;
+            } else {
+                // Pindai SELURUH 4.600+ data sampai ketemu yang cocok
+                if (code.toLowerCase().includes(query) || name.toLowerCase().includes(query)) {
+                    results.push({ code, name });
+                    if (results.length >= 200) break; // Ambil hingga 200 hasil pencarian
+                }
+            }
+        }
+        return results;
+    }, [icd9Search]);
 
     const handleSaveVitals = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -304,84 +328,96 @@ export function ClinicalEncounterPage() {
                             </form>
                         )}
 
-                        {/* DIAGNOSIS ICD-10 DENGAN FITUR SEARCH & SCROLL DROPDOWN */}
+                        {/* DIAGNOSIS ICD-10 MASTER */}
                         {activeTab === 'diagnosis' && (
                             <div className="space-y-4 max-w-2xl text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Diagnosis Utama & Sekunder (ICD-10)</h3>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-sm font-bold text-slate-700">Diagnosis Utama & Sekunder (ICD-10 Master)</h3>
+                                    <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                                        ✓ Dataset e-Klaim
+                                    </span>
+                                </div>
                                 
                                 <div>
                                     <label className="block text-slate-600 mb-1 font-semibold">Cari & Pilih Kode / Nama ICD-10</label>
                                     <input
                                         type="text"
-                                        placeholder="Ketik untuk mencari ICD-10 (misal: J00, Hypertension, Diabetes)..."
+                                        placeholder="Ketik kode/nama penyakit (misal: J00, Typhoid, Diabetes)..."
                                         value={icd10Search}
                                         onChange={(e) => setIcd10Search(e.target.value)}
                                         className="w-full border border-slate-300 rounded-t-xl p-2.5 focus:outline-none focus:border-slate-400 font-medium"
                                     />
                                     
-                                    {/* List Scrollable Dropdown */}
-                                    <div className="border border-t-0 border-slate-300 rounded-b-xl max-h-48 overflow-y-auto divide-y divide-slate-100 bg-slate-50">
+                                    <div className="border border-t-0 border-slate-300 rounded-b-xl max-h-52 overflow-y-auto divide-y divide-slate-100 bg-slate-50">
                                         {filteredIcd10.length > 0 ? (
-                                            filteredIcd10.map((item) => (
+                                            filteredIcd10.map((item, index) => (
                                                 <div
-                                                    key={item.code}
+                                                    key={item.code + index}
                                                     onClick={() => setSelectedIcd10(item)}
                                                     className={`p-2.5 cursor-pointer hover:bg-sky-50 transition-colors flex justify-between items-center ${
                                                         selectedIcd10?.code === item.code ? 'bg-sky-100 font-bold text-[#093C5D]' : 'text-slate-700'
                                                     }`}
                                                 >
-                                                    <span><b>{item.code}</b> - {item.name}</span>
-                                                    {selectedIcd10?.code === item.code && <span className="text-xs text-sky-700">✓ Terpilih</span>}
+                                                    <span>
+                                                        <b className="font-mono bg-slate-200 px-1.5 py-0.5 rounded mr-2 text-slate-800">{item.code}</b> {item.name}
+                                                    </span>
+                                                    {selectedIcd10?.code === item.code && <span className="text-xs text-sky-700 font-semibold">✓ Terpilih</span>}
                                                 </div>
                                             ))
                                         ) : (
                                             <div className="p-3 text-slate-400 text-center">Kode / Penyakit tidak ditemukan</div>
-                                        )}
+                                        )}      
                                     </div>
                                 </div>
 
                                 {selectedIcd10 && (
-                                    <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-sky-900 font-medium flex justify-between items-center">
+                                    <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-sky-900 font-medium flex justify-between items-center shadow-sm">
                                         <div>
                                             <span className="text-xs text-sky-600 block">Diagnosis Terpilih:</span>
-                                            <b>{selectedIcd10.code}</b> - {selectedIcd10.name}
+                                            <b className="font-mono">{selectedIcd10.code}</b> - {selectedIcd10.name}
                                         </div>
-                                        <button onClick={handleSaveIcd10} className="px-4 py-2 bg-[#093C5D] text-white rounded-lg font-bold text-xs">
-                                            Tambah Diagnosis
+                                        <button onClick={handleSaveIcd10} className="px-4 py-2 bg-[#093C5D] text-white rounded-lg font-bold text-xs hover:opacity-90 transition-opacity">
+                                            + Tambah Diagnosis
                                         </button>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* PROSEDUR ICD-9 DENGAN FITUR SEARCH & SCROLL DROPDOWN */}
+                        {/* PROSEDUR ICD-9 MASTER */}
                         {activeTab === 'icd9' && (
                             <div className="space-y-4 max-w-2xl text-xs">
-                                <h3 className="text-sm font-bold text-slate-700">Tindakan & Prosedur Medis (ICD-9-CM)</h3>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-sm font-bold text-slate-700">Tindakan & Prosedur Medis (ICD-9 Master)</h3>
+                                    <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                                        ✓ Dataset e-Klaim
+                                    </span>
+                                </div>
                                 
                                 <div>
                                     <label className="block text-slate-600 mb-1 font-semibold">Cari & Pilih Kode / Nama Prosedur ICD-9</label>
                                     <input
                                         type="text"
-                                        placeholder="Ketik untuk mencari ICD-9 (misal: EKG, USG, Suturing)..."
+                                        placeholder="Ketik kode/nama tindakan (misal: 89.52, EKG, USG, Suturing)..."
                                         value={icd9Search}
                                         onChange={(e) => setIcd9Search(e.target.value)}
                                         className="w-full border border-slate-300 rounded-t-xl p-2.5 focus:outline-none focus:border-slate-400 font-medium"
                                     />
                                     
-                                    {/* List Scrollable Dropdown */}
-                                    <div className="border border-t-0 border-slate-300 rounded-b-xl max-h-48 overflow-y-auto divide-y divide-slate-100 bg-slate-50">
+                                    <div className="border border-t-0 border-slate-300 rounded-b-xl max-h-52 overflow-y-auto divide-y divide-slate-100 bg-slate-50">
                                         {filteredIcd9.length > 0 ? (
-                                            filteredIcd9.map((item) => (
+                                            filteredIcd9.map((item, index) => (
                                                 <div
-                                                    key={item.code}
+                                                    key={item.code + index}
                                                     onClick={() => setSelectedIcd9(item)}
-                                                    className={`p-2.5 cursor-pointer hover:bg-sky-50 transition-colors flex justify-between items-center ${
-                                                        selectedIcd9?.code === item.code ? 'bg-sky-100 font-bold text-[#093C5D]' : 'text-slate-700'
+                                                    className={`p-2.5 cursor-pointer hover:bg-emerald-50 transition-colors flex justify-between items-center ${
+                                                        selectedIcd9?.code === item.code ? 'bg-emerald-100 font-bold text-emerald-900' : 'text-slate-700'
                                                     }`}
                                                 >
-                                                    <span><b>{item.code}</b> - {item.name}</span>
-                                                    {selectedIcd9?.code === item.code && <span className="text-xs text-sky-700">✓ Terpilih</span>}
+                                                    <span>
+                                                        <b className="font-mono bg-slate-200 px-1.5 py-0.5 rounded mr-2 text-slate-800">{item.code}</b> {item.name}
+                                                    </span>
+                                                    {selectedIcd9?.code === item.code && <span className="text-xs text-emerald-700 font-semibold shrink-0">✓ Terpilih</span>}
                                                 </div>
                                             ))
                                         ) : (
@@ -391,13 +427,13 @@ export function ClinicalEncounterPage() {
                                 </div>
 
                                 {selectedIcd9 && (
-                                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-medium flex justify-between items-center">
+                                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-medium flex justify-between items-center shadow-sm">
                                         <div>
                                             <span className="text-xs text-emerald-600 block">Prosedur Terpilih:</span>
-                                            <b>{selectedIcd9.code}</b> - {selectedIcd9.name}
+                                            <b className="font-mono">{selectedIcd9.code}</b> - {selectedIcd9.name}
                                         </div>
-                                        <button onClick={() => alert(`Tindakan ${selectedIcd9.code} berhasil ditambahkan!`)} className="px-4 py-2 bg-emerald-700 text-white rounded-lg font-bold text-xs">
-                                            Tambah Prosedur
+                                        <button onClick={() => alert(`Tindakan ${selectedIcd9.code} berhasil ditambahkan!`)} className="px-4 py-2 bg-emerald-700 text-white rounded-lg font-bold text-xs hover:bg-emerald-800 transition-colors">
+                                            + Tambah Prosedur
                                         </button>
                                     </div>
                                 )}
