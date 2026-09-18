@@ -2,7 +2,7 @@ import {
     createBrowserRouter,
     RouterProvider,
 } from 'react-router-dom';
-
+import { MedicalRecordPage } from './features/medical-record/MedicalRecordPage';
 import {
     LoginPage,
 } from './features/auth/LoginPage';
@@ -26,6 +26,10 @@ import {
 import {
     PatientsPage,
 } from './features/patients/PatientsPage';
+
+import {
+    ClinicalEncounterPage,
+} from './features/clinical/ClinicalEncounterPage';
 
 import {
     AppLayout,
@@ -146,31 +150,38 @@ const router =
                         <RoleRoute
                             roles={[
                                 'DOCTOR',
+                                'ADMIN',
                             ]}
                         >
-                            <ModulePlaceholder
-                                title="Rawat Jalan"
-                                description="Encounter dan pelayanan klinis dokter."
-                                owner="Sava"
-                            />
+                            <ClinicalEncounterPage />
                         </RoleRoute>
                     ),
                 },
 
                 {
-                    path:
-                        'medical-record',
+                    path: 'clinical/:encounterId',
                     element: (
                         <RoleRoute
                             roles={[
                                 'DOCTOR',
+                                'ADMIN',
                             ]}
                         >
-                            <ModulePlaceholder
-                                title="Rekam Medis"
-                                description="SOAP, diagnosis, tindakan, terapi, dan rekam klinis."
-                                owner="Sava"
-                            />
+                            <ClinicalEncounterPage />
+                        </RoleRoute>
+                    ),
+                },
+
+                {
+                    path: 'medical-record',
+                    element: (
+                        <RoleRoute
+                            roles={[
+                                'DOCTOR',
+                                'ADMIN',
+                            ]}
+                        >
+                            <MedicalRecordPage />
                         </RoleRoute>
                     ),
                 },
