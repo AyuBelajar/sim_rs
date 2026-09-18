@@ -1,7 +1,27 @@
 import {
     NavLink,
     Outlet,
+    useLocation,
 } from 'react-router-dom';
+
+import {
+    BarChart3,
+    Bell,
+    CalendarDays,
+    ChevronDown,
+    ClipboardList,
+    Database,
+    FileHeart,
+    HeartPulse,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    ReceiptText,
+    Search,
+    Stethoscope,
+    UserRoundPlus,
+    Users,
+} from 'lucide-react';
 
 import {
     useAuth,
@@ -10,13 +30,72 @@ import {
 import {
     canAccessNavigation,
     navigationItems,
+    type NavigationItem,
 } from '../config/navigation';
+
+
+type MenuGroup = {
+    label?: string;
+    paths: string[];
+};
+
+
+const menuGroups: MenuGroup[] = [
+    {
+        paths: [
+            '/',
+        ],
+    },
+    {
+        label: 'ADMISI',
+        paths: [
+            '/patients',
+            '/schedules',
+            '/bookings',
+            '/admission/outpatient',
+        ],
+    },
+    {
+        label: 'PELAYANAN',
+        paths: [
+            '/clinical',
+            '/medical-record',
+            '/nursing',
+        ],
+    },
+    {
+        label: 'ADMINISTRASI',
+        paths: [
+            '/master-data',
+            '/billing',
+            '/reports',
+        ],
+    },
+];
+
+
+const menuIcons = {
+    '/': LayoutDashboard,
+    '/patients': Users,
+    '/master-data': Database,
+    '/schedules': CalendarDays,
+    '/bookings': ClipboardList,
+    '/admission/outpatient': UserRoundPlus,
+    '/clinical': Stethoscope,
+    '/medical-record': FileHeart,
+    '/nursing': HeartPulse,
+    '/billing': ReceiptText,
+    '/reports': BarChart3,
+};
+
 
 export function AppLayout() {
     const {
         user,
         logout,
     } = useAuth();
+
+    const location = useLocation();
 
     const menus =
         user
@@ -36,170 +115,566 @@ export function AppLayout() {
             '/login';
     }
 
+    function getMenusByPaths(
+        paths: string[],
+    ): NavigationItem[] {
+        return paths
+            .map((path) =>
+                menus.find(
+                    (menu) =>
+                        menu.to === path,
+                ),
+            )
+            .filter(
+                (
+                    menu,
+                ): menu is NavigationItem =>
+                    Boolean(menu),
+            );
+    }
+
+    const currentMenu =
+        menus.find((menu) => {
+            if (menu.to === '/') {
+                return (
+                    location.pathname === '/'
+                );
+            }
+
+            return location.pathname.startsWith(
+                menu.to,
+            );
+        });
+
+    const pageTitle =
+        currentMenu?.label ??
+        'Dashboard';
+
+    const initials =
+        user?.name
+            ?.split(' ')
+            .map((name) => name[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase() ??
+        'AD';
+
     return (
         <div className="
             min-h-screen
-            flex
-            bg-slate-100
+            bg-slate-50
         ">
+            {/* SIDEBAR */}
             <aside
                 className="
-                    w-64
-                    shrink-0
-                    text-white
-                    min-h-screen
                     fixed
                     left-0
                     top-0
+                    z-40
+                    flex
+                    h-screen
+                    w-64
+                    flex-col
+                    text-white
                 "
                 style={{
                     background:
                         '#093C5D',
                 }}
             >
+                {/* LOGO */}
                 <div className="
-                    h-16
                     flex
+                    h-[72px]
+                    shrink-0
                     items-center
-                    px-5
+                    gap-3
                     border-b
                     border-white/10
+                    px-5
                 ">
-                    <div>
+                    <div className="
+                        flex
+                        h-10
+                        w-10
+                        items-center
+                        justify-center
+                        rounded-xl
+                        bg-[#5DF8D8]
+                        text-[#093C5D]
+                        shadow-sm
+                    ">
+                        <HeartPulse
+                            size={22}
+                            strokeWidth={2.4}
+                        />
+                    </div>
+
+                    <div className="
+                        min-w-0
+                    ">
                         <div className="
-                            font-bold
                             text-lg
+                            font-bold
+                            tracking-wide
+                            text-white
                         ">
                             SIMRS
                         </div>
 
                         <div className="
-                            text-[10px]
+                            truncate
+                            text-[11px]
                             text-slate-300
                         ">
-                            Rumah Sakit
+                            Sistem Informasi Rumah Sakit
                         </div>
                     </div>
                 </div>
 
+                {/* NAVIGATION */}
                 <nav className="
+                    flex-1
+                    overflow-y-auto
                     px-3
                     py-5
-                    space-y-1
                 ">
-                    {menus.map(
-                        (menu) => (
-                            <NavLink
-                                key={menu.to}
-                                to={menu.to}
-                                end={
-                                    menu.to ===
-                                    '/'
-                                }
-                                className={({
-                                    isActive,
-                                }) =>
-                                    `
-                                    block
-                                    rounded-lg
-                                    px-3
-                                    py-2.5
-                                    text-sm
-                                    transition-colors
-                                    ${
-                                        isActive
-                                            ? 'bg-white/15 text-white'
-                                            : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    {menuGroups.map(
+                        (
+                            group,
+                            groupIndex,
+                        ) => {
+                            const groupMenus =
+                                getMenusByPaths(
+                                    group.paths,
+                                );
+
+                            if (
+                                groupMenus.length ===
+                                0
+                            ) {
+                                return null;
+                            }
+
+                            return (
+                                <div
+                                    key={
+                                        group.label ??
+                                        `group-${groupIndex}`
                                     }
-                                    `
-                                }
-                            >
-                                {menu.label}
-                            </NavLink>
-                        ),
+                                    className={
+                                        groupIndex === 0
+                                            ? ''
+                                            : 'mt-6'
+                                    }
+                                >
+                                    {group.label && (
+                                        <div className="
+                                            mb-2
+                                            px-3
+                                            text-[10px]
+                                            font-semibold
+                                            tracking-[0.16em]
+                                            text-slate-400
+                                        ">
+                                            {
+                                                group.label
+                                            }
+                                        </div>
+                                    )}
+
+                                    <div className="
+                                        space-y-1
+                                    ">
+                                        {groupMenus.map(
+                                            (
+                                                menu,
+                                            ) => {
+                                                const Icon =
+                                                    menuIcons[
+                                                        menu.to as keyof typeof menuIcons
+                                                    ] ??
+                                                    Menu;
+
+                                                return (
+                                                    <NavLink
+                                                        key={
+                                                            menu.to
+                                                        }
+                                                        to={
+                                                            menu.to
+                                                        }
+                                                        end={
+                                                            menu.to ===
+                                                            '/'
+                                                        }
+                                                        className={({
+                                                            isActive,
+                                                        }) =>
+                                                            `
+                                                            group
+                                                            flex
+                                                            items-center
+                                                            gap-3
+                                                            rounded-xl
+                                                            px-3
+                                                            py-2.5
+                                                            text-sm
+                                                            font-medium
+                                                            transition-all
+                                                            duration-200
+                                                            ${
+                                                                isActive
+                                                                    ? 'bg-[#5DF8D8] text-[#093C5D] shadow-sm'
+                                                                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                                                            }
+                                                            `
+                                                        }
+                                                    >
+                                                        {({
+                                                            isActive,
+                                                        }) => (
+                                                            <>
+                                                                <Icon
+                                                                    size={
+                                                                        18
+                                                                    }
+                                                                    strokeWidth={
+                                                                        isActive
+                                                                            ? 2.3
+                                                                            : 1.9
+                                                                    }
+                                                                    className="
+                                                                        shrink-0
+                                                                    "
+                                                                />
+
+                                                                <span className="
+                                                                    truncate
+                                                                ">
+                                                                    {
+                                                                        menu.label
+                                                                    }
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </NavLink>
+                                                );
+                                            },
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        },
                     )}
                 </nav>
-            </aside>
 
-            <div className="
-                flex-1
-                ml-64
-                min-w-0
-            ">
-                <header className="
-                    h-16
-                    bg-white
-                    border-b
-                    border-slate-200
-                    flex
-                    items-center
-                    justify-between
-                    px-6
-                    sticky
-                    top-0
-                    z-20
+                {/* SIDEBAR FOOTER */}
+                <div className="
+                    border-t
+                    border-white/10
+                    p-3
                 ">
-                    <div>
-                        <div className="
-                            text-sm
-                            font-semibold
-                            text-slate-800
-                        ">
-                            Sistem Informasi
-                            Manajemen Rumah Sakit
-                        </div>
-                    </div>
-
                     <div className="
                         flex
                         items-center
-                        gap-4
+                        gap-3
+                        rounded-xl
+                        bg-white/5
+                        px-3
+                        py-3
                     ">
                         <div className="
-                            text-right
+                            flex
+                            h-9
+                            w-9
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-white/10
+                            text-xs
+                            font-bold
+                            text-white
+                        ">
+                            {initials}
+                        </div>
+
+                        <div className="
+                            min-w-0
+                            flex-1
                         ">
                             <div className="
-                                text-sm
-                                font-medium
-                                text-slate-700
+                                truncate
+                                text-xs
+                                font-semibold
+                                text-white
                             ">
                                 {user?.name}
                             </div>
 
                             <div className="
-                                text-xs
+                                truncate
+                                text-[10px]
                                 text-slate-400
                             ">
                                 {user?.role}
                             </div>
                         </div>
+                    </div>
+                </div>
+            </aside>
 
-                        <button
-                            onClick={
-                                handleLogout
-                            }
-                            className="
-                                border
-                                border-slate-200
-                                rounded-lg
-                                px-3
-                                py-2
-                                text-xs
+            {/* MAIN AREA */}
+            <div className="
+                min-h-screen
+                min-w-0
+                pl-64
+            ">
+                {/* HEADER */}
+                <header className="
+                    sticky
+                    top-0
+                    z-30
+                    flex
+                    h-[72px]
+                    items-center
+                    border-b
+                    border-slate-200
+                    bg-white/95
+                    px-7
+                    backdrop-blur
+                ">
+                    <div className="
+                        flex
+                        w-full
+                        items-center
+                        justify-between
+                        gap-6
+                    ">
+                        {/* PAGE TITLE */}
+                        <div className="
+                            min-w-[180px]
+                        ">
+                            <div className="
+                                text-[11px]
                                 font-medium
-                                text-slate-600
-                                hover:bg-slate-50
-                            "
-                        >
-                            Logout
-                        </button>
+                                text-slate-400
+                            ">
+                                SIMRS
+                                <span className="
+                                    mx-1.5
+                                ">
+                                    /
+                                </span>
+                                <span className="
+                                    text-slate-500
+                                ">
+                                    {pageTitle}
+                                </span>
+                            </div>
+
+                            <h1 className="
+                                mt-0.5
+                                text-lg
+                                font-bold
+                                text-slate-800
+                            ">
+                                {pageTitle}
+                            </h1>
+                        </div>
+
+                        {/* SEARCH */}
+                        <div className="
+                            hidden
+                            max-w-md
+                            flex-1
+                            md:block
+                        ">
+                            <div className="
+                                relative
+                            ">
+                                <Search
+                                    size={17}
+                                    className="
+                                        absolute
+                                        left-3.5
+                                        top-1/2
+                                        -translate-y-1/2
+                                        text-slate-400
+                                    "
+                                />
+
+                                <input
+                                    type="text"
+                                    placeholder="
+                                        Cari pasien, No. RM, diagnosis...
+                                    "
+                                    className="
+                                        h-10
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-200
+                                        bg-slate-50
+                                        pl-10
+                                        pr-4
+                                        text-sm
+                                        text-slate-700
+                                        outline-none
+                                        transition
+                                        placeholder:text-slate-400
+                                        focus:border-[#5DDCC5]
+                                        focus:bg-white
+                                        focus:ring-2
+                                        focus:ring-[#5DF8D8]/20
+                                    "
+                                />
+                            </div>
+                        </div>
+
+                        {/* USER AREA */}
+                        <div className="
+                            flex
+                            items-center
+                            gap-2
+                        ">
+                            <button
+                                type="button"
+                                title="Notifikasi"
+                                className="
+                                    relative
+                                    flex
+                                    h-10
+                                    w-10
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    text-slate-500
+                                    transition
+                                    hover:bg-slate-100
+                                    hover:text-slate-700
+                                "
+                            >
+                                <Bell
+                                    size={19}
+                                />
+
+                                <span className="
+                                    absolute
+                                    right-2.5
+                                    top-2
+                                    h-1.5
+                                    w-1.5
+                                    rounded-full
+                                    bg-rose-500
+                                " />
+                            </button>
+
+                            <div className="
+                                mx-1
+                                h-7
+                                w-px
+                                bg-slate-200
+                            " />
+
+                            <div className="
+                                flex
+                                items-center
+                                gap-3
+                                rounded-xl
+                                px-2
+                                py-1.5
+                            ">
+                                <div className="
+                                    flex
+                                    h-9
+                                    w-9
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    bg-[#093C5D]
+                                    text-xs
+                                    font-bold
+                                    text-white
+                                ">
+                                    {initials}
+                                </div>
+
+                                <div className="
+                                    hidden
+                                    text-left
+                                    lg:block
+                                ">
+                                    <div className="
+                                        max-w-[150px]
+                                        truncate
+                                        text-xs
+                                        font-semibold
+                                        text-slate-700
+                                    ">
+                                        {user?.name}
+                                    </div>
+
+                                    <div className="
+                                        text-[10px]
+                                        font-medium
+                                        text-slate-400
+                                    ">
+                                        {user?.role}
+                                    </div>
+                                </div>
+
+                                <ChevronDown
+                                    size={15}
+                                    className="
+                                        hidden
+                                        text-slate-400
+                                        lg:block
+                                    "
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleLogout
+                                }
+                                title="Logout"
+                                className="
+                                    flex
+                                    h-10
+                                    w-10
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    text-slate-400
+                                    transition
+                                    hover:bg-rose-50
+                                    hover:text-rose-600
+                                "
+                            >
+                                <LogOut
+                                    size={18}
+                                />
+                            </button>
+                        </div>
                     </div>
                 </header>
 
+                {/* PAGE CONTENT */}
                 <main className="
-                    p-6
-                    min-h-[calc(100vh-4rem)]
+                    min-h-[calc(100vh-72px)]
+                    bg-[#F5F7FA]
+                    p-7
                 ">
-                    <Outlet />
+                    <div className="
+                        mx-auto
+                        w-full
+                        max-w-[1600px]
+                    ">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>
