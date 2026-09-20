@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\EncounterController; // 1. Import controller kamu d
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorScheduleController;
+use App\Http\Controllers\Api\BpjsController;
 
 Route::post(
     'auth/login',
@@ -60,3 +61,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('encounters/{encounter}/prescriptions', [EncounterController::class, 'storePrescription']);
     
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('registrations/{registration}/bpjs/verify', [BpjsController::class, 'verify']);
+    Route::post('registrations/{registration}/bpjs/sep', [BpjsController::class, 'createSep']);
+});
+
+Route::post('bpjs/verify-test', [App\Http\Controllers\Api\BpjsController::class, 'verifyTest']);
