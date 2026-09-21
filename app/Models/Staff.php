@@ -13,15 +13,8 @@ class Staff extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'employee_no',
-        'full_name',
-        'profession',
-        'str_no',
-        'sip_no',
-        'phone',
-        'email',
-        'is_active',
+        'user_id', 'employee_no', 'full_name', 'profession', 'str_no', 'sip_no',
+        'phone', 'email', 'is_active',
     ];
 
     protected $casts = [

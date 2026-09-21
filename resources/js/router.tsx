@@ -40,6 +40,10 @@ import {
 } from './features/master-data/MasterDataPage';
 
 import {
+    OutpatientRegistrationPage,
+} from './features/registrations/OutpatientRegistrationPage';
+
+import {
     AppLayout,
 } from './layouts/AppLayout';
 
@@ -126,11 +130,7 @@ const router =
                                 'FRONT_OFFICE',
                             ]}
                         >
-                            <ModulePlaceholder
-                                title="Pendaftaran Rawat Jalan"
-                                description="Registrasi pasien rawat jalan dan verifikasi."
-                                owner="Ipeh"
-                            />
+                            <OutpatientRegistrationPage />
                         </RoleRoute>
                     ),
                 },
