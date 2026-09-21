@@ -47,6 +47,8 @@ import {
     ModulePlaceholder,
 } from './components/ModulePlaceholder';
 
+import { NursingPage } from './features/nursing/NursingPage';
+
 const router =
     createBrowserRouter([
         {
@@ -183,13 +185,11 @@ const router =
                         <RoleRoute
                             roles={[
                                 'NURSE',
+                                'ADMIN'
                             ]}
                         >
-                            <ModulePlaceholder
-                                title="Keperawatan"
-                                description="Pengkajian dan dokumentasi pelayanan keperawatan."
-                                owner="Vega"
-                            />
+                            
+                            <NursingPage />
                         </RoleRoute>
                     ),
                 },

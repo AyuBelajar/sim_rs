@@ -11,10 +11,16 @@ use App\Http\Controllers\Api\EncounterController; // 1. Import controller kamu d
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorScheduleController;
+use App\Http\Controllers\Api\NursingController;
 
 Route::post(
     'auth/login',
     [AuthController::class, 'login']
+);
+
+Route::post(
+    'nursing/assessments',
+    [NursingController::class, 'store']
 );
 
 Route::middleware('auth:sanctum')->group(function () {
