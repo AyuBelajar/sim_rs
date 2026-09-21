@@ -23,6 +23,7 @@ type Props = {
 
     onClose: () => void;
     onSaved: (patient: Patient) => void;
+    submitLabel?: string;
 };
 
 type FormState = {
@@ -71,6 +72,25 @@ const emptyForm: FormState = {
     special_notes: '',
 };
 
+const RELIGION_OPTIONS = [
+    'Islam',
+    'Kristen',
+    'Katolik',
+    'Hindu',
+    'Buddha',
+    'Konghucu',
+];
+
+const OCCUPATION_OPTIONS = [
+    'Pelajar/Mahasiswa',
+    'PNS/ASN',
+    'Karyawan Swasta',
+    'Wiraswasta',
+    'Petani/Nelayan',
+    'Ibu Rumah Tangga',
+    'Tidak Bekerja',
+];
+
 function nullable(
     value: string,
 ): string | null {
@@ -87,6 +107,7 @@ export function PatientFormModal({
     patient,
     onClose,
     onSaved,
+    submitLabel = 'Simpan',
 }: Props) {
     const [form, setForm] =
         useState<FormState>(
@@ -104,6 +125,12 @@ export function PatientFormModal({
             Record<string, string[]>
         >({});
 
+    const [religionOther, setReligionOther] =
+        useState(false);
+
+    const [occupationOther, setOccupationOther] =
+        useState(false);
+
     useEffect(() => {
         if (!open) {
             return;
@@ -116,6 +143,9 @@ export function PatientFormModal({
             setForm({
                 ...emptyForm,
             });
+
+            setReligionOther(false);
+            setOccupationOther(false);
 
             return;
         }
@@ -160,6 +190,16 @@ export function PatientFormModal({
             special_notes:
                 patient.special_notes ?? '',
         });
+
+        setReligionOther(
+            !!patient.religion &&
+            !RELIGION_OPTIONS.includes(patient.religion),
+        );
+
+        setOccupationOther(
+            !!patient.occupation &&
+            !OCCUPATION_OPTIONS.includes(patient.occupation),
+        );
     }, [open, patient]);
 
     function change(
@@ -179,6 +219,42 @@ export function PatientFormModal({
                 [key]: [],
             }),
         );
+    }
+
+    function handleTitleChange(value: string) {
+        const genderMap: Record<string, FormState['gender']> = {
+            'Tn.': 'LAKI_LAKI',
+            'Ny.': 'PEREMPUAN',
+            'Nn.': 'PEREMPUAN',
+        };
+
+        setForm((current) => ({
+            ...current,
+            title: value,
+            gender: genderMap[value] ?? current.gender,
+        }));
+
+        setErrors((current) => ({ ...current, title: [] }));
+    }
+
+    function handleReligionChange(value: string) {
+        if (value === 'Lainnya') {
+            setReligionOther(true);
+            change('religion', '');
+        } else {
+            setReligionOther(false);
+            change('religion', value);
+        }
+    }
+
+    function handleOccupationChange(value: string) {
+        if (value === 'Lainnya') {
+            setOccupationOther(true);
+            change('occupation', '');
+        } else {
+            setOccupationOther(false);
+            change('occupation', value);
+        }
     }
 
     async function handleSubmit(
@@ -246,11 +322,12 @@ export function PatientFormModal({
 
         try {
             let saved: Patient;
+
             if (patient) {
                 const response = await updatePatient(
-                     patient.id,
-                     payload,
-                 );
+                    patient.id,
+                    payload,
+                );
                 saved = response.data;
             } else {
                 const response = await createPatient(
@@ -341,12 +418,7 @@ export function PatientFormModal({
                         <select
                             className={inputClass}
                             value={form.title}
-                            onChange={(e) =>
-                                change(
-                                    'title',
-                                    e.target.value,
-                                )
-                            }
+                            onChange={(e) => handleTitleChange(e.target.value)}
                         >
                             <option value="">
                                 -
@@ -370,7 +442,7 @@ export function PatientFormModal({
                         </select>
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                         <label className="text-sm font-medium">
                             Nama Lengkap *
                         </label>
@@ -399,7 +471,7 @@ export function PatientFormModal({
                         )}
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                         <label className="text-sm font-medium">
                             Nama Panggilan
                         </label>
@@ -604,18 +676,52 @@ export function PatientFormModal({
                             Agama
                         </label>
 
-                        <input
+                        <select
                             className={inputClass}
                             value={
-                                form.religion
+                                religionOther
+                                    ? 'Lainnya'
+                                    : form.religion
                             }
                             onChange={(e) =>
-                                change(
-                                    'religion',
+                                handleReligionChange(
                                     e.target.value,
                                 )
                             }
-                        />
+                        >
+                            <option value="">
+                                -- Pilih --
+                            </option>
+
+                            {RELIGION_OPTIONS.map(
+                                (option) => (
+                                    <option
+                                        key={option}
+                                        value={option}
+                                    >
+                                        {option}
+                                    </option>
+                                ),
+                            )}
+
+                            <option value="Lainnya">
+                                Lainnya
+                            </option>
+                        </select>
+
+                        {religionOther && (
+                            <input
+                                className={`${inputClass} mt-2`}
+                                placeholder="Sebutkan agama"
+                                value={form.religion}
+                                onChange={(e) =>
+                                    change(
+                                        'religion',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                        )}
                     </div>
 
                     <div>
@@ -623,18 +729,52 @@ export function PatientFormModal({
                             Pekerjaan
                         </label>
 
-                        <input
+                        <select
                             className={inputClass}
                             value={
-                                form.occupation
+                                occupationOther
+                                    ? 'Lainnya'
+                                    : form.occupation
                             }
                             onChange={(e) =>
-                                change(
-                                    'occupation',
+                                handleOccupationChange(
                                     e.target.value,
                                 )
                             }
-                        />
+                        >
+                            <option value="">
+                                -- Pilih --
+                            </option>
+
+                            {OCCUPATION_OPTIONS.map(
+                                (option) => (
+                                    <option
+                                        key={option}
+                                        value={option}
+                                    >
+                                        {option}
+                                    </option>
+                                ),
+                            )}
+
+                            <option value="Lainnya">
+                                Lainnya
+                            </option>
+                        </select>
+
+                        {occupationOther && (
+                            <input
+                                className={`${inputClass} mt-2`}
+                                placeholder="Sebutkan pekerjaan"
+                                value={form.occupation}
+                                onChange={(e) =>
+                                    change(
+                                        'occupation',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                        )}
                     </div>
 
                     <div className="md:col-span-2">
@@ -712,8 +852,8 @@ export function PatientFormModal({
                         }}
                     >
                         {loading
-                            ? 'Menyimpan...'
-                            : 'Simpan'}
+                            ? 'Memproses...'
+                            : submitLabel}
                     </button>
                 </div>
             </form>

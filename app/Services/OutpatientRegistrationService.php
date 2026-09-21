@@ -63,11 +63,13 @@ class OutpatientRegistrationService
 
             $countToday = OutpatientRegistration::whereDate('registration_date', $today)
                 ->lockForUpdate()
+                ->get(['id'])
                 ->count();
 
             $counterCount = OutpatientRegistration::whereDate('registration_date', $today)
                 ->where('counter_queue_no', 'like', 'A-%')
                 ->lockForUpdate()
+                ->get(['id'])
                 ->count();
 
             $registration = OutpatientRegistration::create([

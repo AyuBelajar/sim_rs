@@ -47,3 +47,7 @@ export async function getHospitalUnits() {
 export async function getDoctors() {
     return api<{ data: Doctor[] }>('/api/doctors');
 }
+
+export async function getPayers() {
+    return api<{ data: Payer[] }>('/api/payers');
+}

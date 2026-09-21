@@ -4,12 +4,13 @@ import { ApiError } from '../../api/http';
 import { Modal } from '../../components/ui/Modal';
 import type { Patient } from '../patients/types';
 
-import { createRegistration, getDoctors, getHospitalUnits } from './registrationApi';
+import { createRegistration, getDoctors, getHospitalUnits, getPayers } from './registrationApi';
 import type { ArrivalMethod, Doctor, HospitalUnit, Payer } from './types';
 
 type Props = {
     open: boolean;
     patient: Patient | null;
+    onBack: () => void;
     onClose: () => void;
     onSaved: () => void;
 };
@@ -21,7 +22,7 @@ const PAYER_OPTIONS: { value: Payer['category']; label: string }[] = [
     { value: 'KARYAWAN', label: 'Karyawan' },
 ];
 
-export function RegistrationFormModal({ open, patient, onClose, onSaved }: Props) {
+export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved }: Props) {
     const [hospitalUnits, setHospitalUnits] = useState<HospitalUnit[]>([]);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [payers, setPayers] = useState<Payer[]>([]);
@@ -51,6 +52,7 @@ export function RegistrationFormModal({ open, patient, onClose, onSaved }: Props
 
         getHospitalUnits().then((res) => setHospitalUnits(res.data)).catch(() => {});
         getDoctors().then((res) => setDoctors(res.data)).catch(() => {});
+        getPayers().then((res) => setPayers(res.data)).catch(() => {});
         // Payer belum punya endpoint list khusus kategori — pakai statis 4 kategori sesuai payers.category
         // Ganti bagian ini dengan panggilan GET /api/payers begitu endpoint list-nya tersedia untuk role ini.
     }, [open]);
@@ -132,29 +134,26 @@ export function RegistrationFormModal({ open, patient, onClose, onSaved }: Props
                     </div>
 
                     <div>
-                        <label className="text-sm font-medium">Pembayaran / Penjamin *</label>
-                        <div className="grid grid-cols-2 gap-3 mt-1">
-                            {PAYER_OPTIONS.map((option) => (
-                                <label
-                                    key={option.value}
-                                    className={`border rounded-lg px-4 py-2.5 flex items-center gap-2 cursor-pointer text-sm ${
-                                        payerId === option.value ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200'
-                                    }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="payer_category"
-                                        checked={payerId === option.value}
-                                        onChange={() => setPayerId(option.value)}
-                                    />
-                                    {option.label}
-                                </label>
-                            ))}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1">
-                            * Sementara memakai kategori sebagai id — sambungkan ke <code>GET /api/payers</code> begitu tersedia untuk role FRONT_OFFICE.
-                        </p>
+                    <label className="text-sm font-medium">Pembayaran / Penjamin *</label>
+                    <div className="grid grid-cols-2 gap-3 mt-1">
+                        {payers.map((payer) => (
+                            <label
+                                key={payer.id}
+                                className={`border rounded-lg px-4 py-2.5 flex items-center gap-2 cursor-pointer text-sm ${
+                                    payerId === String(payer.id) ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="payer_id"
+                                    checked={payerId === String(payer.id)}
+                                    onChange={() => setPayerId(String(payer.id))}
+                                />
+                                {payer.name}
+                            </label>
+                        ))}
                     </div>
+                </div>
 
                     <div>
                         <label className="text-sm font-medium">Kode Booking</label>
@@ -178,7 +177,9 @@ export function RegistrationFormModal({ open, patient, onClose, onSaved }: Props
                 </div>
 
                 <div className="border-t bg-slate-50 px-6 py-4 flex justify-end gap-2">
-                    <button type="button" onClick={onClose} className="border rounded-lg px-4 py-2">Batal</button>
+                    <button type="button" onClick={onBack} className="border rounded-lg px-4 py-2">
+                        Kembali
+                    </button>
                     <button
                         type="submit"
                         disabled={loading || !hospitalUnitId || !doctorId || !payerId}

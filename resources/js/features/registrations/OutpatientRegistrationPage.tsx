@@ -21,6 +21,7 @@ export function OutpatientRegistrationPage() {
     const [search, setSearch] = useState('');
 
     const [patientFormOpen, setPatientFormOpen] = useState(false);
+    const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
     const [registrationTarget, setRegistrationTarget] = useState<Patient | null>(null);
 
     const load = useCallback(async () => {
@@ -86,12 +87,15 @@ export function OutpatientRegistrationPage() {
 
             <div className="flex justify-center">
                 <button
-                    onClick={() => setPatientFormOpen(true)}
-                    className="px-6 py-3 rounded-lg font-semibold"
-                    style={{ background: '#FFDF82', color: '#093C5D' }}
-                >
-                    + Pasien Baru
-                </button>
+                    onClick={() => {
+                    setEditingPatient(null);
+                    setPatientFormOpen(true);
+                }}
+                className="px-6 py-3 rounded-lg font-semibold"
+                style={{ background: '#FFDF82', color: '#093C5D' }}
+            >
+                Pasien Baru
+            </button>
             </div>
 
             {error && (
@@ -153,11 +157,11 @@ export function OutpatientRegistrationPage() {
 
             <PatientFormModal
                 open={patientFormOpen}
-                patient={null}
+                patient={editingPatient}
                 onClose={() => setPatientFormOpen(false)}
                 onSaved={(patient) => {
                     setPatientFormOpen(false);
-                    setRegistrationTarget(patient); // lanjut ke form registrasi kunjungan
+                    setRegistrationTarget(patient);
                     load();
                 }}
             />
@@ -165,6 +169,11 @@ export function OutpatientRegistrationPage() {
             <RegistrationFormModal
                 open={registrationTarget !== null}
                 patient={registrationTarget}
+                onBack={() => {
+                    setEditingPatient(registrationTarget);
+                    setRegistrationTarget(null);
+                    setPatientFormOpen(true);
+                }}
                 onClose={() => setRegistrationTarget(null)}
                 onSaved={() => {
                     setRegistrationTarget(null);
