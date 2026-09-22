@@ -25,6 +25,8 @@ import {
     navigationItems,
 } from '../../config/navigation';
 
+import { DoctorDashboard } from './DoctorDashboard';
+
 
 const quickAccessConfig = {
     '/patients': {
@@ -76,6 +78,13 @@ export function DashboardPage() {
         user,
     } = useAuth();
 
+if (user?.role === 'DOCTOR') {
+    return (
+        <DoctorDashboard
+            userName={user.name}
+        />
+    );
+}
     const accessibleMenus =
         user
             ? navigationItems.filter(
@@ -98,7 +107,7 @@ export function DashboardPage() {
 
     const roleLabel =
         user?.role
-            ?.replaceAll('_', ' ')
+            ?.replace(/_/g, ' ')
             ?? '-';
 
     return (
