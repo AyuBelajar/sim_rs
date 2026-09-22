@@ -1,6 +1,7 @@
 <?php
  
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorScheduleController;
 use App\Http\Controllers\Api\EncounterController;
@@ -41,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
             'outpatient-registrations',
             OutpatientRegistrationController::class
         )->only(['index', 'store']);
+
+        Route::apiResource('bookings', BookingController::class)
+        ->only(['index', 'store', 'update']);
+        Route::post('bookings/{booking}/check-in', [BookingController::class, 'checkIn']);
 
         Route::get(
             'hospital-units',
