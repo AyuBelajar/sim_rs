@@ -1,18 +1,19 @@
 <?php
-
+ 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\PatientController;
-use App\Http\Controllers\Api\PayerController;
-use App\Http\Controllers\Api\PatientPolicyController;
-use App\Http\Controllers\Api\HospitalUnitController;
-use App\Http\Controllers\Api\HealthcareFacilityController;
-use App\Http\Controllers\Api\MedicalServiceCatalogController;
-use App\Http\Controllers\Api\EncounterController; // 1. Import controller kamu di sini
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorScheduleController;
 use App\Http\Controllers\Api\NursingController;
 use App\Http\Controllers\Api\EncounterCompletionController;
+use App\Http\Controllers\Api\EncounterController;
+use App\Http\Controllers\Api\HealthcareFacilityController;
+use App\Http\Controllers\Api\HospitalUnitController;
+use App\Http\Controllers\Api\MedicalServiceCatalogController;
+use App\Http\Controllers\Api\OutpatientRegistrationController;
+use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PatientPolicyController;
+use App\Http\Controllers\Api\PayerController;
+use Illuminate\Support\Facades\Route;
 
 Route::post(
     'auth/login',
@@ -47,17 +48,30 @@ Route::middleware('auth:sanctum')->group(function () {
             'patients',
             PatientController::class
         );
+
+        Route::apiResource(
+            'outpatient-registrations',
+            OutpatientRegistrationController::class
+        )->only(['index', 'store']);
+
+        Route::get(
+            'hospital-units',
+            [HospitalUnitController::class, 'index']
+        );
+
+        Route::get(
+            'doctors',
+            [DoctorController::class, 'index']
+        );
     });
 
-    Route::get('payers', [PayerController::class, 'index']);
+     Route::get('payers', [PayerController::class, 'index']);
     Route::get('patients/{patient}/policies', [PatientPolicyController::class, 'index']);
     Route::post('patients/{patient}/policies', [PatientPolicyController::class, 'store']);
-
-    Route::get('hospital-units', [HospitalUnitController::class, 'index']);
+ 
     Route::get('healthcare-facilities', [HealthcareFacilityController::class, 'index']);
     Route::get('medical-services', [MedicalServiceCatalogController::class, 'index']);
-    Route::get('doctors', [DoctorController::class, 'index']);
-
+ 
     Route::get('doctor-schedules', [DoctorScheduleController::class, 'index']);
     Route::post('doctor-schedules', [DoctorScheduleController::class, 'store']);
     Route::patch('doctor-schedules/{schedule}/quotas/{quota}', [DoctorScheduleController::class, 'updateQuota']);
