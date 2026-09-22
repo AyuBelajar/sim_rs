@@ -29,12 +29,12 @@ export async function getRegistrations(filters: RegistrationFilters = {}) {
     const query = params.toString();
 
     return api<RegistrationListResponse>(
-        `/api/outpatient-registrations${query ? `?${query}` : ''}`,
+        `/api/registrations${query ? `?${query}` : ''}`,
     );
 }
 
 export async function createRegistration(payload: RegistrationPayload) {
-    return api<RegistrationResponse>('/api/outpatient-registrations', {
+    return api<RegistrationResponse>('/api/registrations', {
         method: 'POST',
         body: JSON.stringify(payload),
     });

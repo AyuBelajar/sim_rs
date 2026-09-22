@@ -37,10 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
             PatientController::class
         );
 
-        Route::apiResource(
-            'outpatient-registrations',
-            OutpatientRegistrationController::class
-        )->only(['index', 'store']);
+        Route::apiResource('registrations', 
+        OutpatientRegistrationController::class)
+         ->only(['index', 'store']);
 
         Route::get(
             'hospital-units',
