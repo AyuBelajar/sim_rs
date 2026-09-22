@@ -33,18 +33,14 @@ import {
     type NavigationItem,
 } from '../config/navigation';
 
-
 type MenuGroup = {
     label?: string;
     paths: string[];
 };
 
-
 const menuGroups: MenuGroup[] = [
     {
-        paths: [
-            '/',
-        ],
+        paths: ['/'],
     },
     {
         label: 'ADMISI',
@@ -73,7 +69,6 @@ const menuGroups: MenuGroup[] = [
     },
 ];
 
-
 const menuIcons = {
     '/': LayoutDashboard,
     '/patients': Users,
@@ -88,7 +83,6 @@ const menuIcons = {
     '/reports': BarChart3,
 };
 
-
 export function AppLayout() {
     const {
         user,
@@ -100,12 +94,12 @@ export function AppLayout() {
     const menus =
         user
             ? navigationItems.filter(
-                (menu) =>
-                    canAccessNavigation(
-                        user.role,
-                        menu.roles,
-                    ),
-            )
+                  (menu) =>
+                      canAccessNavigation(
+                          user.role,
+                          menu.roles,
+                      ),
+              )
             : [];
 
     async function handleLogout() {
@@ -160,10 +154,12 @@ export function AppLayout() {
         'AD';
 
     return (
-        <div className="
-            min-h-screen
-            bg-slate-50
-        ">
+        <div
+            className="
+                min-h-screen
+                bg-slate-50
+            "
+        >
             {/* SIDEBAR */}
             <aside
                 className="
@@ -179,66 +175,86 @@ export function AppLayout() {
                 "
                 style={{
                     background:
-                        '#093C5D',
+                        'linear-gradient(180deg, #093C5D 0%, #07344F 100%)',
                 }}
             >
-                {/* LOGO */}
-                <div className="
-                    flex
-                    h-[72px]
-                    shrink-0
-                    items-center
-                    gap-3
-                    border-b
-                    border-white/10
-                    px-5
-                ">
-                    <div className="
+                {/* HOSPITAL BRAND */}
+                <div
+                    className="
                         flex
-                        h-10
-                        w-10
+                        h-[86px]
+                        shrink-0
                         items-center
-                        justify-center
-                        rounded-xl
-                        bg-[#5DF8D8]
-                        text-[#093C5D]
-                        shadow-sm
-                    ">
-                        <HeartPulse
-                            size={22}
-                            strokeWidth={2.4}
+                        gap-3
+                        border-b
+                        border-white/10
+                        px-5
+                    "
+                >
+                    <div
+                        className="
+                            flex
+                            h-12
+                            w-12
+                            shrink-0
+                            items-center
+                            justify-center
+                            overflow-hidden
+                            rounded-xl
+                            bg-white
+                            p-1.5
+                            shadow-sm
+                        "
+                    >
+                        <img
+                            src="/images/logo-harapan-indonesia.png"
+                            alt="Logo Rumah Sakit Harapan Indonesia"
+                            className="
+                                h-full
+                                w-full
+                                object-contain
+                            "
                         />
                     </div>
 
-                    <div className="
-                        min-w-0
-                    ">
-                        <div className="
-                            text-lg
-                            font-bold
-                            tracking-wide
-                            text-white
-                        ">
-                            SIMRS
+                    <div className="min-w-0">
+                        <div
+                            className="
+                                text-[15px]
+                                font-bold
+                                leading-[1.15]
+                                text-white
+                            "
+                        >
+                            Rumah Sakit
+                            <br />
+                            Harapan Indonesia
                         </div>
 
-                        <div className="
-                            truncate
-                            text-[11px]
-                            text-slate-300
-                        ">
-                            Sistem Informasi Rumah Sakit
+                        <div
+                            className="
+                                mt-1
+                                text-[9px]
+                                font-medium
+                                uppercase
+                                tracking-[0.16em]
+                                text-cyan-100/60
+                            "
+                        >
+                            SIMRS
                         </div>
                     </div>
                 </div>
 
                 {/* NAVIGATION */}
-                <nav className="
-                    flex-1
-                    overflow-y-auto
-                    px-3
-                    py-5
-                ">
+                <nav
+                    className="
+                        flex-1
+                        overflow-y-auto
+                        px-3
+                        py-5
+                    "
+                >
                     {menuGroups.map(
                         (
                             group,
@@ -269,23 +285,23 @@ export function AppLayout() {
                                     }
                                 >
                                     {group.label && (
-                                        <div className="
-                                            mb-2
-                                            px-3
-                                            text-[10px]
-                                            font-semibold
-                                            tracking-[0.16em]
-                                            text-slate-400
-                                        ">
+                                        <div
+                                            className="
+                                                mb-2
+                                                px-3
+                                                text-[10px]
+                                                font-semibold
+                                                tracking-[0.16em]
+                                                text-slate-400
+                                            "
+                                        >
                                             {
                                                 group.label
                                             }
                                         </div>
                                     )}
 
-                                    <div className="
-                                        space-y-1
-                                    ">
+                                    <div className="space-y-1">
                                         {groupMenus.map(
                                             (
                                                 menu,
@@ -312,22 +328,22 @@ export function AppLayout() {
                                                             isActive,
                                                         }) =>
                                                             `
-                                                            group
-                                                            flex
-                                                            items-center
-                                                            gap-3
-                                                            rounded-xl
-                                                            px-3
-                                                            py-2.5
-                                                            text-sm
-                                                            font-medium
-                                                            transition-all
-                                                            duration-200
-                                                            ${
-                                                                isActive
-                                                                    ? 'bg-[#5DF8D8] text-[#093C5D] shadow-sm'
-                                                                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                                                            }
+                                                                group
+                                                                flex
+                                                                items-center
+                                                                gap-3
+                                                                rounded-xl
+                                                                px-3
+                                                                py-2.5
+                                                                text-sm
+                                                                font-medium
+                                                                transition-all
+                                                                duration-200
+                                                                ${
+                                                                    isActive
+                                                                        ? 'bg-[#5DF8D8] text-[#093C5D] shadow-sm'
+                                                                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                                                                }
                                                             `
                                                         }
                                                     >
@@ -344,14 +360,10 @@ export function AppLayout() {
                                                                             ? 2.3
                                                                             : 1.9
                                                                     }
-                                                                    className="
-                                                                        shrink-0
-                                                                    "
+                                                                    className="shrink-0"
                                                                 />
 
-                                                                <span className="
-                                                                    truncate
-                                                                ">
+                                                                <span className="truncate">
                                                                     {
                                                                         menu.label
                                                                     }
@@ -370,54 +382,79 @@ export function AppLayout() {
                 </nav>
 
                 {/* SIDEBAR FOOTER */}
-                <div className="
-                    border-t
-                    border-white/10
-                    p-3
-                ">
-                    <div className="
-                        flex
-                        items-center
-                        gap-3
-                        rounded-xl
-                        bg-white/5
-                        px-3
-                        py-3
-                    ">
-                        <div className="
+                <div
+                    className="
+                        border-t
+                        border-white/10
+                        p-3
+                    "
+                >
+                    <div
+                        className="
+                            mb-2
+                            px-3
+                            text-[9px]
+                            uppercase
+                            tracking-[0.14em]
+                            text-slate-500
+                        "
+                    >
+                        Rumah Sakit Harapan Indonesia
+                    </div>
+
+                    <div
+                        className="
                             flex
-                            h-9
-                            w-9
-                            shrink-0
                             items-center
-                            justify-center
-                            rounded-full
-                            bg-white/10
-                            text-xs
-                            font-bold
-                            text-white
-                        ">
+                            gap-3
+                            rounded-xl
+                            bg-white/5
+                            px-3
+                            py-3
+                        "
+                    >
+                        <div
+                            className="
+                                flex
+                                h-9
+                                w-9
+                                shrink-0
+                                items-center
+                                justify-center
+                                rounded-full
+                                bg-white/10
+                                text-xs
+                                font-bold
+                                text-white
+                            "
+                        >
                             {initials}
                         </div>
 
-                        <div className="
-                            min-w-0
-                            flex-1
-                        ">
-                            <div className="
-                                truncate
-                                text-xs
-                                font-semibold
-                                text-white
-                            ">
+                        <div
+                            className="
+                                min-w-0
+                                flex-1
+                            "
+                        >
+                            <div
+                                className="
+                                    truncate
+                                    text-xs
+                                    font-semibold
+                                    text-white
+                                "
+                            >
                                 {user?.name}
                             </div>
 
-                            <div className="
-                                truncate
-                                text-[10px]
-                                text-slate-400
-                            ">
+                            <div
+                                className="
+                                    truncate
+                                    text-[10px]
+                                    text-slate-400
+                                "
+                            >
                                 {user?.role}
                             </div>
                         </div>
@@ -426,74 +463,83 @@ export function AppLayout() {
             </aside>
 
             {/* MAIN AREA */}
-            <div className="
-                min-h-screen
-                min-w-0
-                pl-64
-            ">
+            <div
+                className="
+                    min-h-screen
+                    min-w-0
+                    pl-64
+                "
+            >
                 {/* HEADER */}
-                <header className="
-                    sticky
-                    top-0
-                    z-30
-                    flex
-                    h-[72px]
-                    items-center
-                    border-b
-                    border-slate-200
-                    bg-white/95
-                    px-7
-                    backdrop-blur
-                ">
-                    <div className="
+                <header
+                    className="
+                        sticky
+                        top-0
+                        z-30
                         flex
-                        w-full
+                        h-[86px]
                         items-center
-                        justify-between
-                        gap-6
-                    ">
+                        border-b
+                        border-slate-200
+                        bg-white/95
+                        px-7
+                        backdrop-blur
+                    "
+                >
+                    <div
+                        className="
+                            flex
+                            w-full
+                            items-center
+                            justify-between
+                            gap-6
+                        "
+                    >
                         {/* PAGE TITLE */}
-                        <div className="
-                            min-w-[180px]
-                        ">
-                            <div className="
-                                text-[11px]
-                                font-medium
-                                text-slate-400
-                            ">
-                                SIMRS
-                                <span className="
-                                    mx-1.5
-                                ">
-                                    /
+                        <div className="min-w-[250px]">
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    gap-1.5
+                                    text-[11px]
+                                    font-medium
+                                    text-slate-400
+                                "
+                            >
+                                <span>
+                                    Rumah Sakit Harapan Indonesia
                                 </span>
-                                <span className="
-                                    text-slate-500
-                                ">
+
+                                <span>/</span>
+
+                                <span className="text-slate-500">
                                     {pageTitle}
                                 </span>
                             </div>
 
-                            <h1 className="
-                                mt-0.5
-                                text-lg
-                                font-bold
-                                text-slate-800
-                            ">
+                            <h1
+                                className="
+                                    mt-0.5
+                                    text-lg
+                                    font-bold
+                                    text-slate-800
+                                "
+                            >
                                 {pageTitle}
                             </h1>
                         </div>
 
                         {/* SEARCH */}
-                        <div className="
-                            hidden
-                            max-w-md
-                            flex-1
-                            md:block
-                        ">
-                            <div className="
-                                relative
-                            ">
+                        <div
+                            className="
+                                hidden
+                                max-w-md
+                                flex-1
+                                md:block
+                            "
+                        >
+                            <div className="relative">
                                 <Search
                                     size={17}
                                     className="
@@ -507,9 +553,7 @@ export function AppLayout() {
 
                                 <input
                                     type="text"
-                                    placeholder="
-                                        Cari pasien, No. RM, diagnosis...
-                                    "
+                                    placeholder="Cari pasien, No. RM, diagnosis..."
                                     className="
                                         h-10
                                         w-full
@@ -534,11 +578,13 @@ export function AppLayout() {
                         </div>
 
                         {/* USER AREA */}
-                        <div className="
-                            flex
-                            items-center
-                            gap-2
-                        ">
+                        <div
+                            className="
+                                flex
+                                items-center
+                                gap-2
+                            "
+                        >
                             <button
                                 type="button"
                                 title="Notifikasi"
@@ -556,71 +602,83 @@ export function AppLayout() {
                                     hover:text-slate-700
                                 "
                             >
-                                <Bell
-                                    size={19}
-                                />
+                                <Bell size={19} />
 
-                                <span className="
-                                    absolute
-                                    right-2.5
-                                    top-2
-                                    h-1.5
-                                    w-1.5
-                                    rounded-full
-                                    bg-rose-500
-                                " />
+                                <span
+                                    className="
+                                        absolute
+                                        right-2.5
+                                        top-2
+                                        h-1.5
+                                        w-1.5
+                                        rounded-full
+                                        bg-rose-500
+                                    "
+                                />
                             </button>
 
-                            <div className="
-                                mx-1
-                                h-7
-                                w-px
-                                bg-slate-200
-                            " />
+                            <div
+                                className="
+                                    mx-1
+                                    h-7
+                                    w-px
+                                    bg-slate-200
+                                "
+                            />
 
-                            <div className="
-                                flex
-                                items-center
-                                gap-3
-                                rounded-xl
-                                px-2
-                                py-1.5
-                            ">
-                                <div className="
+                            <div
+                                className="
                                     flex
-                                    h-9
-                                    w-9
                                     items-center
-                                    justify-center
-                                    rounded-full
-                                    bg-[#093C5D]
-                                    text-xs
-                                    font-bold
-                                    text-white
-                                ">
+                                    gap-3
+                                    rounded-xl
+                                    px-2
+                                    py-1.5
+                                "
+                            >
+                                <div
+                                    className="
+                                        flex
+                                        h-9
+                                        w-9
+                                        items-center
+                                        justify-center
+                                        rounded-full
+                                        bg-[#093C5D]
+                                        text-xs
+                                        font-bold
+                                        text-white
+                                    "
+                                >
                                     {initials}
                                 </div>
 
-                                <div className="
-                                    hidden
-                                    text-left
-                                    lg:block
-                                ">
-                                    <div className="
-                                        max-w-[150px]
-                                        truncate
-                                        text-xs
-                                        font-semibold
-                                        text-slate-700
-                                    ">
+                                <div
+                                    className="
+                                        hidden
+                                        text-left
+                                        lg:block
+                                    "
+                                >
+                                    <div
+                                        className="
+                                            max-w-[150px]
+                                            truncate
+                                            text-xs
+                                            font-semibold
+                                            text-slate-700
+                                        "
+                                    >
                                         {user?.name}
                                     </div>
 
-                                    <div className="
-                                        text-[10px]
-                                        font-medium
-                                        text-slate-400
-                                    ">
+                                    <div
+                                        className="
+                                            text-[10px]
+                                            font-medium
+                                            text-slate-400
+                                        "
+                                    >
                                         {user?.role}
                                     </div>
                                 </div>
@@ -654,25 +712,27 @@ export function AppLayout() {
                                     hover:text-rose-600
                                 "
                             >
-                                <LogOut
-                                    size={18}
-                                />
+                                <LogOut size={18} />
                             </button>
                         </div>
                     </div>
                 </header>
 
                 {/* PAGE CONTENT */}
-                <main className="
-                    min-h-[calc(100vh-72px)]
-                    bg-[#F5F7FA]
-                    p-7
-                ">
-                    <div className="
-                        mx-auto
-                        w-full
-                        max-w-[1600px]
-                    ">
+                <main
+                    className="
+                        min-h-[calc(100vh-86px)]
+                        bg-[#F5F7FA]
+                        p-7
+                    "
+                >
+                    <div
+                        className="
+                            mx-auto
+                            w-full
+                            max-w-[1600px]
+                        "
+                    >
                         <Outlet />
                     </div>
                 </main>
