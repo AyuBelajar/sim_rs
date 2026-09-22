@@ -39,6 +39,7 @@ export const navigationItems:
             to: '/schedules',
             roles: [
                 'FRONT_OFFICE',
+                'DOCTOR',
             ],
         },
 

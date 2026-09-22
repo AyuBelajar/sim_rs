@@ -98,7 +98,7 @@ const router =
                 {
                     path: 'schedules',
                     element: (
-                        <RoleRoute roles={['FRONT_OFFICE']}>
+                        <RoleRoute roles={['FRONT_OFFICE', 'DOCTOR']}>
                             <SchedulesPage />
                         </RoleRoute>
                     ),
