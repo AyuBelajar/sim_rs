@@ -20,7 +20,7 @@ class OutpatientRegistrationService
         $date = $filters['date'] ?? Carbon::today()->toDateString();
 
         return OutpatientRegistration::query()
-            ->with(['patient', 'hospitalUnit', 'doctor.staff', 'payer'])
+            ->with(['patient', 'hospitalUnit', 'doctor.staff', 'payer', 'referral', 'policeCase'])
             ->whereDate('registration_date', $date)
             ->when(
                 $filters['search'] ?? null,
@@ -95,7 +95,13 @@ class OutpatientRegistrationService
                     'patient_id' => $registration->patient_id,
                 ],
             );
+        if ($registration->arrival_method === 'RUJUKAN' && !empty($data['referral'])) {
+            $registration->referral()->create($data['referral']);
+        }
 
+        if ($registration->arrival_method === 'KASUS_POLISI' && !empty($data['police_case'])) {
+            $registration->policeCase()->create($data['police_case']);
+        }
             return $registration->load(['patient', 'hospitalUnit', 'doctor.staff', 'payer']);
         });
     }

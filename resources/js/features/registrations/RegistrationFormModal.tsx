@@ -15,13 +15,6 @@ type Props = {
     onSaved: () => void;
 };
 
-const PAYER_OPTIONS: { value: Payer['category']; label: string }[] = [
-    { value: 'UMUM', label: 'Umum' },
-    { value: 'BPJS', label: 'BPJS' },
-    { value: 'ASURANSI', label: 'Asuransi' },
-    { value: 'KARYAWAN', label: 'Karyawan' },
-];
-
 export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved }: Props) {
     const [hospitalUnits, setHospitalUnits] = useState<HospitalUnit[]>([]);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -31,6 +24,10 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
     const [doctorId, setDoctorId] = useState('');
     const [payerId, setPayerId] = useState('');
     const [arrivalMethod, setArrivalMethod] = useState<ArrivalMethod>('DATANG_SENDIRI');
+    const [referralNo, setReferralNo] = useState('');
+    const [referralDate, setReferralDate] = useState('');
+    const [policeReportNo, setPoliceReportNo] = useState('');
+    const [policeInstitution, setPoliceInstitution] = useState('');
     const [bookingCode, setBookingCode] = useState('');
     const [isPackage, setIsPackage] = useState(false);
     const [hasCob, setHasCob] = useState(false);
@@ -74,6 +71,8 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
                 external_booking_code: bookingCode || null,
                 is_package_service: isPackage,
                 has_cob: hasCob,
+                referral: arrivalMethod === 'RUJUKAN' ? { referral_no: referralNo, referral_date: referralDate || null } : undefined,
+                police_case: arrivalMethod === 'KASUS_POLISI' ? { report_no: policeReportNo, institution_name: policeInstitution } : undefined,
             });
 
             onSaved();
@@ -112,6 +111,33 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
                         </select>
                     </div>
 
+                    {arrivalMethod === 'RUJUKAN' && (
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                            <p className="text-sm font-medium text-blue-900">Data Rujukan</p>
+                            <div>
+                                <label className="text-sm font-medium">No. Rujukan *</label>
+                                <input className={inputClass} value={referralNo} onChange={(e) => setReferralNo(e.target.value)} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">Tanggal Rujukan</label>
+                                <input type="date" className={inputClass} value={referralDate} onChange={(e) => setReferralDate(e.target.value)} />
+                            </div>
+                        </div>
+                    )}
+
+                    {arrivalMethod === 'KASUS_POLISI' && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                            <p className="text-sm font-medium text-amber-900">Laporan Kasus Polisi</p>
+                            <div>
+                                <label className="text-sm font-medium">No. Laporan *</label>
+                                <input className={inputClass} value={policeReportNo} onChange={(e) => setPoliceReportNo(e.target.value)} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">Instansi</label>
+                                <input className={inputClass} value={policeInstitution} onChange={(e) => setPoliceInstitution(e.target.value)} />
+                            </div>
+                        </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium">Poli *</label>

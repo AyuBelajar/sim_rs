@@ -43,6 +43,8 @@ import {
     OutpatientRegistrationPage,
 } from './features/registrations/OutpatientRegistrationPage';
 
+import { BookingsPage } from './features/bookings/BookingsPage';
+
 import {
     AppLayout,
 } from './layouts/AppLayout';
@@ -107,16 +109,8 @@ const router =
                 {
                     path: 'bookings',
                     element: (
-                        <RoleRoute
-                            roles={[
-                                'FRONT_OFFICE',
-                            ]}
-                        >
-                            <ModulePlaceholder
-                                title="Booking"
-                                description="Booking pasien dan validasi kuota."
-                                owner="Ipeh"
-                            />
+                        <RoleRoute roles={['FRONT_OFFICE']}>
+                            <BookingsPage />
                         </RoleRoute>
                     ),
                 },
