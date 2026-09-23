@@ -68,6 +68,8 @@ export type RegistrationPayload = {
     external_booking_code?: string | null;
     is_package_service?: boolean;
     has_cob?: boolean;
+    referral?: { referral_no: string; referral_date: string | null };
+    police_case?: { report_no: string; institution_name: string };
 };
 
 export type RegistrationStats = {

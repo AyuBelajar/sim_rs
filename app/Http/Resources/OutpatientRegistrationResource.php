@@ -50,6 +50,16 @@ class OutpatientRegistrationResource extends JsonResource
                 'category' => $this->payer->category,
             ]),
 
+            'referral' => $this->whenLoaded('referral', fn () => $this->referral ? [
+                'referral_no' => $this->referral->referral_no,
+                'referral_date' => $this->referral->referral_date?->format('Y-m-d'),
+            ] : null),
+
+            'police_case' => $this->whenLoaded('policeCase', fn () => $this->policeCase ? [
+                'report_no' => $this->policeCase->report_no,
+                'institution_name' => $this->policeCase->institution_name,
+            ] : null),
+            
             'created_at' => $this->created_at?->toISOString(),
         ];
     }
