@@ -19,6 +19,12 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $bookings = OutpatientBooking::with(['patient', 'hospitalUnit', 'doctor.staff'])
+            ->when($request->search, function ($q, $search) {
+                $q->where('booking_code', 'like', "%{$search}%")
+                    ->orWhereHas('patient', fn ($q) => $q
+                        ->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('medical_record_no', 'like', "%{$search}%"));
+            })
             ->when($request->date, fn ($q, $v) => $q->whereDate('visit_date', $v))
             ->when($request->status, fn ($q, $v) => $q->where('status', $v))
             ->latest()

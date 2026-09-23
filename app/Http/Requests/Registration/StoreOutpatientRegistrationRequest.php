@@ -25,6 +25,13 @@ class StoreOutpatientRegistrationRequest extends FormRequest
             'external_booking_code' => ['nullable', 'string', 'max:60'],
             'is_package_service' => ['nullable', 'boolean'],
             'has_cob' => ['nullable', 'boolean'],
-        ];
+            'referral.healthcare_facility_id' => ['required_if:arrival_method,RUJUKAN', 'nullable', 'exists:healthcare_facilities,id'],
+            'referral.referral_no' => ['required_if:arrival_method,RUJUKAN', 'nullable', 'string', 'max:100'],
+            'referral.referral_date' => ['nullable', 'date'],
+
+            'police_case.report_no' => ['required_if:arrival_method,KASUS_POLISI', 'nullable', 'string', 'max:100'],
+            'police_case.institution_name' => ['nullable', 'string', 'max:180'],
+            'police_case.case_description' => ['nullable', 'string', 'max:1000'],
+                    ];
     }
 }

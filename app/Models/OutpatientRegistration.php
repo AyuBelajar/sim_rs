@@ -46,4 +46,14 @@ class OutpatientRegistration extends Model
     {
         return $this->belongsTo(Payer::class);
     }
+
+    public function referral()
+    {
+        return $this->hasOne(RegistrationReferral::class, 'outpatient_registration_id');
+    }
+
+    public function policeCase()
+    {
+        return $this->hasOne(PoliceCaseReport::class, 'outpatient_registration_id');
+    }
 }
