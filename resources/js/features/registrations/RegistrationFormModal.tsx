@@ -5,26 +5,19 @@ import { Modal } from '../../components/ui/Modal';
 import type { Patient } from '../patients/types';
 
 import { createRegistration, getDoctors, getHospitalUnits, getPayers } from './registrationApi';
-import type { ArrivalMethod, Doctor, HospitalUnit, Payer } from './types';
+import type { ArrivalMethod, HospitalUnit, Payer } from './types';
 
 type Props = {
     open: boolean;
     patient: Patient | null;
     onBack: () => void;
     onClose: () => void;
-    onSaved: () => void;
+    onSaved: (registrationData?: any) => void;
 };
-
-const PAYER_OPTIONS: { value: Payer['category']; label: string }[] = [
-    { value: 'UMUM', label: 'Umum' },
-    { value: 'BPJS', label: 'BPJS' },
-    { value: 'ASURANSI', label: 'Asuransi' },
-    { value: 'KARYAWAN', label: 'Karyawan' },
-];
 
 export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved }: Props) {
     const [hospitalUnits, setHospitalUnits] = useState<HospitalUnit[]>([]);
-    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [doctors, setDoctors] = useState<any[]>([]);
     const [payers, setPayers] = useState<Payer[]>([]);
 
     const [hospitalUnitId, setHospitalUnitId] = useState('');
@@ -53,9 +46,14 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
         getHospitalUnits().then((res) => setHospitalUnits(res.data)).catch(() => {});
         getDoctors().then((res) => setDoctors(res.data)).catch(() => {});
         getPayers().then((res) => setPayers(res.data)).catch(() => {});
-        // Payer belum punya endpoint list khusus kategori — pakai statis 4 kategori sesuai payers.category
-        // Ganti bagian ini dengan panggilan GET /api/payers begitu endpoint list-nya tersedia untuk role ini.
     }, [open]);
+
+    // Opsi: Filter dokter sesuai unit poli yang dipilih, atau tampilkan semua jika poli belum dipilih
+    const filteredDoctors = hospitalUnitId
+        ? doctors.filter((doc) =>
+              doc.units?.some((u: any) => String(u.hospital_unit_id) === String(hospitalUnitId))
+          )
+        : doctors;
 
     async function handleSubmit(event: FormEvent) {
         event.preventDefault();
@@ -65,7 +63,7 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
         setError(null);
 
         try {
-            await createRegistration({
+            const res = await createRegistration({
                 patient_id: patient.id,
                 hospital_unit_id: Number(hospitalUnitId),
                 doctor_id: Number(doctorId),
@@ -76,7 +74,14 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
                 has_cob: hasCob,
             });
 
-            onSaved();
+            const selectedPayer = payers.find((p) => String(p.id) === String(payerId));
+            const registrationResult = {
+                ...(res?.data ?? res),
+                payer: selectedPayer ?? { id: Number(payerId) },
+                patient: patient,
+            };
+
+            onSaved(registrationResult);
         } catch (err) {
             setError(err instanceof ApiError ? err.message : 'Gagal menyimpan pendaftaran.');
         } finally {
@@ -115,7 +120,15 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium">Poli *</label>
-                            <select className={inputClass} value={hospitalUnitId} onChange={(e) => setHospitalUnitId(e.target.value)}>
+                            <select
+                                className={inputClass}
+                                value={hospitalUnitId}
+                                onChange={(e) => {
+                                    setHospitalUnitId(e.target.value);
+                                    setDoctorId(''); // Reset dokter saat poli diganti
+                                }}
+                                required
+                            >
                                 <option value="">-- Pilih Poli --</option>
                                 {hospitalUnits.map((u) => (
                                     <option key={u.id} value={u.id}>{u.name}</option>
@@ -124,49 +137,69 @@ export function RegistrationFormModal({ open, patient, onBack, onClose, onSaved 
                         </div>
                         <div>
                             <label className="text-sm font-medium">Dokter *</label>
-                            <select className={inputClass} value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
+                            <select
+                                className={inputClass}
+                                value={doctorId}
+                                onChange={(e) => setDoctorId(e.target.value)}
+                                required
+                            >
                                 <option value="">-- Pilih Dokter --</option>
-                                {doctors.map((d) => (
-                                    <option key={d.id} value={d.id}>{d.display_name}</option>
+                                {(filteredDoctors.length > 0 ? filteredDoctors : doctors).map((d: any) => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.full_name || d.display_name || `Dokter #${d.id}`} {d.specialization ? `(${d.specialization})` : ''}
+                                    </option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
                     <div>
-                    <label className="text-sm font-medium">Pembayaran / Penjamin *</label>
-                    <div className="grid grid-cols-2 gap-3 mt-1">
-                        {payers.map((payer) => (
-                            <label
-                                key={payer.id}
-                                className={`border rounded-lg px-4 py-2.5 flex items-center gap-2 cursor-pointer text-sm ${
-                                    payerId === String(payer.id) ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200'
-                                }`}
-                            >
-                                <input
-                                    type="radio"
-                                    name="payer_id"
-                                    checked={payerId === String(payer.id)}
-                                    onChange={() => setPayerId(String(payer.id))}
-                                />
-                                {payer.name}
-                            </label>
-                        ))}
+                        <label className="text-sm font-medium">Pembayaran / Penjamin *</label>
+                        <div className="grid grid-cols-2 gap-3 mt-1">
+                            {payers.map((payer) => (
+                                <label
+                                    key={payer.id}
+                                    className={`border rounded-lg px-4 py-2.5 flex items-center gap-2 cursor-pointer text-sm ${
+                                        payerId === String(payer.id) ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="payer_id"
+                                        checked={payerId === String(payer.id)}
+                                        onChange={() => setPayerId(String(payer.id))}
+                                    />
+                                    {payer.name}
+                                </label>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
                     <div>
                         <label className="text-sm font-medium">Kode Booking</label>
-                        <input className={inputClass} value={bookingCode} onChange={(e) => setBookingCode(e.target.value)} placeholder="Opsional" />
+                        <input
+                            className={inputClass}
+                            value={bookingCode}
+                            onChange={(e) => setBookingCode(e.target.value)}
+                            placeholder="Opsional"
+                        />
                     </div>
 
                     <div className="flex gap-6 text-sm">
                         <label className="flex items-center gap-2">
-                            <input type="checkbox" checked={isPackage} onChange={(e) => setIsPackage(e.target.checked)} />
+                            <input
+                                type="checkbox"
+                                checked={isPackage}
+                                onChange={(e) => setIsPackage(e.target.checked)}
+                            />
                             Layanan Paket
                         </label>
                         <label className="flex items-center gap-2">
-                            <input type="checkbox" checked={hasCob} onChange={(e) => setHasCob(e.target.checked)} />
+                            <input
+                                type="checkbox"
+                                checked={hasCob}
+                                onChange={(e) => setHasCob(e.target.checked)}
+                            />
                             Data COB
                         </label>
                     </div>

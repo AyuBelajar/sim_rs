@@ -6,6 +6,7 @@ import type { Patient } from '../patients/types';
 
 import { getRegistrations } from './registrationApi';
 import { RegistrationFormModal } from './RegistrationFormModal';
+import { BpjsVerificationModal } from './BpjsVerifModal';
 import { StatCard } from './StatCard';
 import type { OutpatientRegistration, RegistrationStats } from './types';
 
@@ -23,6 +24,11 @@ export function OutpatientRegistrationPage() {
     const [patientFormOpen, setPatientFormOpen] = useState(false);
     const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
     const [registrationTarget, setRegistrationTarget] = useState<Patient | null>(null);
+
+    // State untuk Modal BPJS Verifikasi & Terbit SEP
+    const [bpjsModalOpen, setBpjsModalOpen] = useState(false);
+    const [bpjsRegistrationId, setBpjsRegistrationId] = useState<number | null>(null);
+    const [bpjsPatientName, setBpjsPatientName] = useState('');
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -48,6 +54,22 @@ export function OutpatientRegistrationPage() {
         event.preventDefault();
         setSearch(searchInput.trim());
     }
+
+    // Handler saat pendaftaran sukses disimpan
+    const handleRegistrationSaved = (savedRegistration?: any) => {
+        setRegistrationTarget(null);
+        load();
+
+        // Cek apakah penjamin berkategori BPJS
+        const isBpjs = savedRegistration?.payer?.category === 'BPJS' || 
+                       savedRegistration?.payer?.name?.toUpperCase().includes('BPJS');
+
+        if (isBpjs && savedRegistration?.id) {
+            setBpjsRegistrationId(savedRegistration.id);
+            setBpjsPatientName(savedRegistration.patient?.full_name || registrationTarget?.full_name || 'Pasien');
+            setBpjsModalOpen(true);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -77,6 +99,7 @@ export function OutpatientRegistrationPage() {
                         className="flex-1 border border-slate-200 rounded-lg px-3 py-2"
                     />
                     <button
+                        type="submit"
                         className="px-5 rounded-lg font-medium"
                         style={{ background: '#FFDF82', color: '#093C5D' }}
                     >
@@ -88,14 +111,14 @@ export function OutpatientRegistrationPage() {
             <div className="flex justify-center">
                 <button
                     onClick={() => {
-                    setEditingPatient(null);
-                    setPatientFormOpen(true);
-                }}
-                className="px-6 py-3 rounded-lg font-semibold"
-                style={{ background: '#FFDF82', color: '#093C5D' }}
-            >
-                Pasien Baru
-            </button>
+                        setEditingPatient(null);
+                        setPatientFormOpen(true);
+                    }}
+                    className="px-6 py-3 rounded-lg font-semibold"
+                    style={{ background: '#FFDF82', color: '#093C5D' }}
+                >
+                    + Pasien Baru
+                </button>
             </div>
 
             {error && (
@@ -117,17 +140,18 @@ export function OutpatientRegistrationPage() {
                             <th className="p-3 text-left">Status</th>
                             <th className="p-3 text-left">Dokter</th>
                             <th className="p-3 text-left">Poli</th>
-                            <th className="p-3 text-left">Aksi</th>
+                            <th className="p-3 text-left">Antrean</th>
+                            <th className="p-3 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={10} className="text-center py-12 text-slate-400">Memuat data...</td>
+                                <td colSpan={11} className="text-center py-12 text-slate-400">Memuat data...</td>
                             </tr>
                         ) : data.length > 0 ? (
                             data.map((reg) => (
-                                <tr key={reg.id} className="border-b border-slate-100">
+                                <tr key={reg.id} className="border-b border-slate-100 hover:bg-slate-50/50">
                                     <td className="p-3 font-semibold text-blue-600">{reg.patient.medical_record_no}</td>
                                     <td className="p-3 font-medium">{reg.patient.full_name}</td>
                                     <td className="p-3">{reg.patient.nik ?? '-'}</td>
@@ -144,17 +168,32 @@ export function OutpatientRegistrationPage() {
                                     <td className="p-3">{reg.doctor?.display_name ?? '-'}</td>
                                     <td className="p-3">{reg.hospital_unit?.name ?? '-'}</td>
                                     <td className="p-3">{reg.counter_queue_no}</td>
+                                    <td className="p-3 text-center">
+                                        {reg.payer?.category === 'BPJS' && (
+                                            <button
+                                                onClick={() => {
+                                                    setBpjsRegistrationId(reg.id);
+                                                    setBpjsPatientName(reg.patient.full_name);
+                                                    setBpjsModalOpen(true);
+                                                }}
+                                                className="px-2.5 py-1 text-xs font-medium rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100"
+                                            >
+                                                Cek BPJS
+                                            </button>
+                                        )}
+                                    </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={10} className="text-center py-16 text-slate-400">Belum ada pendaftaran hari ini.</td>
+                                <td colSpan={11} className="text-center py-16 text-slate-400">Belum ada pendaftaran hari ini.</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
             </div>
 
+            {/* Modal Tambah/Edit Pasien */}
             <PatientFormModal
                 open={patientFormOpen}
                 patient={editingPatient}
@@ -166,6 +205,7 @@ export function OutpatientRegistrationPage() {
                 }}
             />
 
+            {/* Modal Form Pendaftaran Rawat Jalan */}
             <RegistrationFormModal
                 open={registrationTarget !== null}
                 patient={registrationTarget}
@@ -175,10 +215,15 @@ export function OutpatientRegistrationPage() {
                     setPatientFormOpen(true);
                 }}
                 onClose={() => setRegistrationTarget(null)}
-                onSaved={() => {
-                    setRegistrationTarget(null);
-                    load();
-                }}
+                onSaved={handleRegistrationSaved}
+            />
+
+            {/* Modal Verifikasi BPJS & Terbit SEP (Tugas Vega) */}
+            <BpjsVerificationModal
+                isOpen={bpjsModalOpen}
+                onClose={() => setBpjsModalOpen(false)}
+                registrationId={bpjsRegistrationId}
+                patientName={bpjsPatientName}
             />
         </div>
     );
