@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorScheduleController;
+use App\Http\Controllers\Api\NursingController;
+use App\Http\Controllers\Api\EncounterCompletionController;
 use App\Http\Controllers\Api\EncounterController;
 use App\Http\Controllers\Api\HealthcareFacilityController;
 use App\Http\Controllers\Api\HospitalUnitController;
@@ -17,6 +19,16 @@ use Illuminate\Support\Facades\Route;
 Route::post(
     'auth/login',
     [AuthController::class, 'login']
+);
+
+Route::post(
+    'nursing/assessments',
+    [NursingController::class, 'store']
+);
+
+Route::post(
+    'encounters/{encounter}/complete',
+    [EncounterCompletionController::class, 'complete']
 );
 
 Route::middleware('auth:sanctum')->group(function () {
