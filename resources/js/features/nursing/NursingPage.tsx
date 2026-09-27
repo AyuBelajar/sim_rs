@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../../api/http';
+import { saveNursingAssessment, getNursingAssessment } from './NursingApi';
 
 // Tipe data pasien antrean
 interface PatientQueueItem {
@@ -13,38 +15,15 @@ interface PatientQueueItem {
   status: 'Menunggu' | 'Dilayani' | 'Selesai';
 }
 
-// Data awal / mock antrean jika backend queue belum dipasang
 const DEFAULT_QUEUE: PatientQueueItem[] = [
   {
-    registration_id: 1,
+    registration_id: 4,
     no_antrean: 'A-01',
     no_rm: '005548',
     nama: 'WAWAN GUNAWAN',
     umur: 63,
     jenis_kelamin: 'Laki-laki',
     penjamin: 'BPJS',
-    poli: 'Poli Penyakit Dalam',
-    status: 'Menunggu',
-  },
-  {
-    registration_id: 2,
-    no_antrean: 'A-02',
-    no_rm: '006120',
-    nama: 'SITI NURHALIZA',
-    umur: 34,
-    jenis_kelamin: 'Perempuan',
-    penjamin: 'BPJS',
-    poli: 'Poli Penyakit Dalam',
-    status: 'Menunggu',
-  },
-  {
-    registration_id: 3,
-    no_antrean: 'A-03',
-    no_rm: '007891',
-    nama: 'BUDI SANTOSO',
-    umur: 45,
-    jenis_kelamin: 'Laki-laki',
-    penjamin: 'Umum',
     poli: 'Poli Penyakit Dalam',
     status: 'Menunggu',
   },
@@ -73,10 +52,9 @@ export function NursingPage() {
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Ambil antrean real dari backend jika endpoint sudah tersedia
-  useEffect(() => {
-    fetch('/api/nursing/queue')
-      .then((res) => (res.ok ? res.json() : null))
+  // Ambil antrean aktual dari backend
+  const loadQueue = () => {
+    api<{ success: boolean; data: PatientQueueItem[] }>('/api/nursing/queue')
       .then((resData) => {
         if (resData && resData.data && resData.data.length > 0) {
           setQueue(resData.data);
@@ -84,30 +62,55 @@ export function NursingPage() {
         }
       })
       .catch(() => {
-        // Fallback memakai default queue jika endpoint belum aktif
+        // Fallback memakai DEFAULT_QUEUE
       });
+  };
+
+  useEffect(() => {
+    loadQueue();
   }, []);
 
-  // Saat perawat klik tombol "Layani" pada baris antrean
+  // Saat perawat klik pasien di antrean, ambil asesmen sebelumnya (jika pernah disimpan)
   const handleSelectPatient = (patient: PatientQueueItem) => {
     setSelectedPatient(patient);
     setNotif('');
     setIsError(false);
-    // Reset form untuk pasien baru
-    setFormData({
-      keluhan_utama: '',
-      riwayat_alergi: '',
-      tekanan_darah: '120/80',
-      detak_jantung: '80',
-      suhu_badan: '36.5',
-      nafas: '20',
-      tinggi_badan: '165',
-      berat_badan: '60',
-      tingkat_kesadaran: 'Compos Mentis',
-      skala_nyeri: '0',
-      risiko_jatuh: 'Rendah',
-      catatan_soap: '',
-    });
+
+    getNursingAssessment(patient.registration_id)
+      .then((res) => {
+        if (res?.data) {
+          setFormData({
+            keluhan_utama: res.data.keluhan_utama || '',
+            riwayat_alergi: res.data.riwayat_alergi || '',
+            tekanan_darah: res.data.tekanan_darah || '120/80',
+            detak_jantung: String(res.data.detak_jantung ?? '80'),
+            suhu_badan: String(res.data.suhu_badan ?? '36.5'),
+            nafas: String(res.data.nafas ?? '20'),
+            tinggi_badan: String(res.data.tinggi_badan ?? '165'),
+            berat_badan: String(res.data.berat_badan ?? '60'),
+            tingkat_kesadaran: res.data.tingkat_kesadaran || 'Compos Mentis',
+            skala_nyeri: String(res.data.skala_nyeri ?? '0'),
+            risiko_jatuh: res.data.risiko_jatuh || 'Rendah',
+            catatan_soap: res.data.catatan_soap || '',
+          });
+        } else {
+          setFormData({
+            keluhan_utama: '',
+            riwayat_alergi: '',
+            tekanan_darah: '120/80',
+            detak_jantung: '80',
+            suhu_badan: '36.5',
+            nafas: '20',
+            tinggi_badan: '165',
+            berat_badan: '60',
+            tingkat_kesadaran: 'Compos Mentis',
+            skala_nyeri: '0',
+            risiko_jatuh: 'Rendah',
+            catatan_soap: '',
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handleChange = (
@@ -118,64 +121,43 @@ export function NursingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedPatient) return;
+
     setLoading(true);
     setNotif('Menyimpan data Askep...');
     setIsError(false);
 
     const payload = {
-      registration_id: selectedPatient.registration_id,
-      keluhan_utama: formData.keluhan_utama.trim() || null,
-      riwayat_alergi: formData.riwayat_alergi.trim() || null,
-      tekanan_darah: formData.tekanan_darah.trim() || null,
-      detak_jantung: formData.detak_jantung ? parseInt(formData.detak_jantung, 10) : null,
-      suhu_badan: formData.suhu_badan ? parseFloat(formData.suhu_badan) : null,
-      nafas: formData.nafas ? parseInt(formData.nafas, 10) : null,
-      tinggi_badan: formData.tinggi_badan ? parseFloat(formData.tinggi_badan) : null,
-      berat_badan: formData.berat_badan ? parseFloat(formData.berat_badan) : null,
-      tingkat_kesadaran: formData.tingkat_kesadaran || null,
-      skala_nyeri: formData.skala_nyeri !== '' ? parseInt(formData.skala_nyeri, 10) : 0,
-      risiko_jatuh: formData.risiko_jatuh || null,
-      catatan_soap: formData.catatan_soap.trim() || null,
+      keluhan_utama: formData.keluhan_utama.trim(),
+      riwayat_alergi: formData.riwayat_alergi.trim() || undefined,
+      tekanan_darah: formData.tekanan_darah.trim() || undefined,
+      detak_jantung: formData.detak_jantung ? parseInt(formData.detak_jantung, 10) : undefined,
+      suhu_badan: formData.suhu_badan ? parseFloat(formData.suhu_badan) : undefined,
+      nafas: formData.nafas ? parseInt(formData.nafas, 10) : undefined,
+      tinggi_badan: formData.tinggi_badan ? parseFloat(formData.tinggi_badan) : undefined,
+      berat_badan: formData.berat_badan ? parseFloat(formData.berat_badan) : undefined,
+      tingkat_kesadaran: formData.tingkat_kesadaran,
+      skala_nyeri: parseInt(formData.skala_nyeri, 10) || 0,
+      risiko_jatuh: formData.risiko_jatuh,
+      catatan_soap: formData.catatan_soap.trim() || undefined,
     };
 
     try {
-      const res = await fetch('/api/nursing/assessments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      await saveNursingAssessment(selectedPatient.registration_id, payload);
+      setIsError(false);
+      setNotif(`Askep untuk ${selectedPatient.nama} berhasil disimpan!`);
 
-      let resData: any = {};
-      try {
-        resData = await res.json();
-      } catch {
-        resData = {};
-      }
-
-      if (res.ok) {
-        setIsError(false);
-        setNotif(`Askep untuk ${selectedPatient.nama} berhasil disimpan!`);
-        // Update status pasien di antrean lokal menjadi "Dilayani"
-        setQueue((prevQueue) =>
-          prevQueue.map((item) =>
-            item.registration_id === selectedPatient.registration_id
-              ? { ...item, status: 'Dilayani' }
-              : item
-          )
-        );
-      } else {
-        setIsError(true);
-        const detail =
-          resData.message ||
-          (resData.errors ? Object.values(resData.errors).flat().join(', ') : 'Gagal menyimpan data.');
-        setNotif(`Gagal: ${detail}`);
-      }
-    } catch {
+      // Update status lokal antrean menjadi "Dilayani"
+      setQueue((prevQueue) =>
+        prevQueue.map((item) =>
+          item.registration_id === selectedPatient.registration_id
+            ? { ...item, status: 'Dilayani' }
+            : item
+        )
+      );
+    } catch (err: any) {
       setIsError(true);
-      setNotif('Terjadi kesalahan koneksi ke server.');
+      setNotif(`Gagal: ${err.message || 'Terjadi kesalahan saat menyimpan.'}`);
     } finally {
       setLoading(false);
     }
@@ -280,8 +262,9 @@ export function NursingPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Anamnesa */}
             <div className="space-y-2">
-              <label className="block font-semibold text-slate-700">Keluhan Utama Pasien</label>
+              <label className="block font-semibold text-slate-700">Keluhan Utama Pasien *</label>
               <textarea
+                required
                 name="keluhan_utama"
                 rows={2}
                 value={formData.keluhan_utama}
@@ -401,7 +384,6 @@ export function NursingPage() {
                     value={formData.skala_nyeri}
                     onChange={handleChange}
                     className="w-full border border-slate-300 rounded-lg p-2"
-                    placeholder="0 (Tidak nyeri)"
                   />
                 </div>
 

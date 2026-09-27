@@ -17,20 +17,15 @@ use App\Http\Controllers\Api\PatientPolicyController;
 use App\Http\Controllers\Api\PayerController;
 use Illuminate\Support\Facades\Route;
 
-Route::post(
-    'auth/login',
-    [AuthController::class, 'login']
-);
+Route::post('auth/login', [AuthController::class, 'login']);
 
-Route::post(
-    'nursing/assessments',
-    [NursingController::class, 'store']
-);
+// Route Modul Nursing / Asuhan Keperawatan (Tugas Vega)
+Route::get('nursing/queue', [NursingController::class, 'queue']);
+Route::get('registrations/{registration}/nursing/assessment', [NursingController::class, 'getAssessment']);
+Route::post('registrations/{registration}/nursing/assessment', [NursingController::class, 'storeAssessment']);
 
-Route::post(
-    'encounters/{encounter}/complete',
-    [EncounterCompletionController::class, 'complete']
-);
+// Route Encounter Completion (Tugas Vega / Terintegrasi)
+Route::post('encounters/{encounter}/complete', [EncounterCompletionController::class, 'complete']);
 
 // Route BPJS Adapter (Tugas Vega)
 Route::post('registrations/{registration}/bpjs/verify', [BpjsController::class, 'verify']);
@@ -38,40 +33,21 @@ Route::post('registrations/{registration}/bpjs/sep', [BpjsController::class, 'cr
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get(
-        'auth/me',
-        [AuthController::class, 'me']
-    );
-
-    Route::post(
-        'auth/logout',
-        [AuthController::class, 'logout']
-    );
+    Route::get('auth/me', [AuthController::class, 'me']);
+    Route::post('auth/logout', [AuthController::class, 'logout']);
 
     Route::middleware('role:FRONT_OFFICE')->group(function () {
+        Route::apiResource('patients', PatientController::class);
 
-        Route::apiResource(
-            'patients',
-            PatientController::class
-        );
-
-        Route::apiResource('registrations', 
-        OutpatientRegistrationController::class)
-         ->only(['index', 'store']);
+        Route::apiResource('registrations', OutpatientRegistrationController::class)
+            ->only(['index', 'store']);
 
         Route::apiResource('bookings', BookingController::class)
-        ->only(['index', 'store', 'update']);
+            ->only(['index', 'store', 'update']);
         Route::post('bookings/{booking}/check-in', [BookingController::class, 'checkIn']);
 
-        Route::get(
-            'hospital-units',
-            [HospitalUnitController::class, 'index']
-        );
-
-        Route::get(
-            'doctors',
-            [DoctorController::class, 'index']
-        );
+        Route::get('hospital-units', [HospitalUnitController::class, 'index']);
+        Route::get('doctors', [DoctorController::class, 'index']);
     });
 
     Route::get('payers', [PayerController::class, 'index']);
@@ -93,5 +69,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('encounters/{encounter}/diagnoses', [EncounterController::class, 'storeDiagnosis']);
     Route::post('encounters/{encounter}/procedures', [EncounterController::class, 'storeProcedure']);
     Route::post('encounters/{encounter}/prescriptions', [EncounterController::class, 'storePrescription']);
-
 });

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class NursingAssessment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'registration_id',
         'petugas',
@@ -23,4 +26,9 @@ class NursingAssessment extends Model
         'risiko_jatuh',
         'catatan_soap',
     ];
+
+    public function registration()
+    {
+        return $this->belongsTo(OutpatientRegistration::class, 'registration_id');
+    }
 }

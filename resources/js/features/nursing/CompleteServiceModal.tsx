@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { api, ApiError } from '../../api/http';
 
 interface Props {
   isOpen: boolean;
@@ -43,24 +44,19 @@ export function CompleteServiceModal({ isOpen, onClose, encounterId, patientName
     }
 
     try {
-      const res = await fetch(`/api/encounters/${encounterId}/complete`, {
+      await api(`/api/encounters/${encounterId}/complete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(payload),
       });
 
-      const resData = await res.json();
-      if (res.ok) {
-        onSuccess();
-        onClose();
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        setErrorMsg(err.message);
       } else {
-        setErrorMsg(resData.message || 'Gagal menyelesaikan pelayanan.');
+        setErrorMsg('Gagal menyelesaikan pelayanan.');
       }
-    } catch {
-      setErrorMsg('Gagal terhubung ke server.');
     } finally {
       setLoading(false);
     }
@@ -114,7 +110,6 @@ export function CompleteServiceModal({ isOpen, onClose, encounterId, patientName
             </select>
           </div>
 
-          {/* Conditional field jika butuh kontrol ulang */}
           {exitType === 'KONTROL_ULANG' && (
             <div className="bg-teal-50/50 p-3 rounded-lg border border-teal-200 space-y-2">
               <label className="block font-semibold text-teal-900">Rencana Tanggal Kontrol</label>
